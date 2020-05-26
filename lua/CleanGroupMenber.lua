@@ -62,7 +62,6 @@ function ReceiveGroupMsg(CurrentQQ, data)
         mode = string.match(data.Content, "^踢潜水 %d+ (.+)模式$")
         MemberList = {}
         LastUin = 0
-        data.FromGroupId = 614202391
         while true do
             list =
                 Api.Api_CallFunc(
