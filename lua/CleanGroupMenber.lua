@@ -117,7 +117,7 @@ function ReceiveGroupMsg(CurrentQQ, data)
         end
         print("准备踢出")
         for i, v in pairs(removeUser) do
-            print(i, v["NickName"], v["MemberUin"])
+            print(i, v["NickName"], v["MemberLevel"], v["GroupCard"], v["Gender"], v["MemberUin"], v["LastSpeakTime"])
             Api.Api_GroupMgr(
                 CurrentQQ,
                 {
