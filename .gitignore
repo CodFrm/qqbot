@@ -1,2 +1,8 @@
 
+*.exe
+iotqq-plugins
 config.yaml
+library/*.jpg
+
+.idea
+.vscode

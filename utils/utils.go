@@ -11,7 +11,6 @@ import (
 
 func ImageToBase64(img image.Image) (string, error) {
 	buffer := bytes.NewBuffer(nil)
-	saveImage("1.jpg", img)
 	if err := png.Encode(buffer, img); err != nil {
 		return "", err
 	}

@@ -102,7 +102,7 @@ func main() {
 				lastNum[groupid] = 0
 			}
 			lastContent[groupid] = args.CurrentPacket.Data.Content
-			if lastNum[groupid] == 3 {
+			if lastNum[groupid] == 2 {
 				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, args.CurrentPacket.Data.Content)
 			}
 		}
