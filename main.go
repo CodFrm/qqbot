@@ -1,14 +1,18 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"github.com/CodFrm/iotqq-plugins/command"
 	"github.com/CodFrm/iotqq-plugins/config"
+	"github.com/CodFrm/iotqq-plugins/db"
 	"github.com/CodFrm/iotqq-plugins/model"
 	"github.com/CodFrm/iotqq-plugins/utils"
 	gosocketio "github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
+	"io/ioutil"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +20,12 @@ import (
 
 func main() {
 	if err := config.Init("config.yaml"); err != nil {
+		log.Fatal(err)
+	}
+	if err := db.Init(); err != nil {
+		log.Fatal(err)
+	}
+	if err := command.Init(); err != nil {
 		log.Fatal(err)
 	}
 	c, err := gosocketio.Dial(
@@ -95,6 +105,12 @@ func main() {
 				}
 			}
 		} else if args.CurrentPacket.Data.MsgType == "TextMsg" {
+			regex := regexp.MustCompile("^来点好康的(.*?)图")
+			ret := regex.FindStringSubmatch(args.CurrentPacket.Data.Content)
+			if len(ret) > 0 {
+				hkd(args, "", ret[1])
+				return
+			}
 			groupid := args.CurrentPacket.Data.FromGroupID
 			if lastContent[groupid] == args.CurrentPacket.Data.Content {
 				lastNum[groupid]++
@@ -110,6 +126,11 @@ func main() {
 	}); err != nil {
 		log.Fatal(err)
 	}
+	if err := c.On("OnEvents", func(h *gosocketio.Channel, args interface{}) {
+		//println(args)
+	}); err != nil {
+		log.Fatal(err)
+	}
 	SendJoin(c)
 	for {
 		select {
@@ -120,6 +141,28 @@ func main() {
 			}
 		}
 	}
+}
+
+func hkd(args model.Message, at string, commandstr string) error {
+	utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "图片搜索中...请稍后")
+	go func() {
+		img, err := command.HaoKangDe(commandstr)
+		if err != nil {
+			utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "服务器开小差了,搜索失败T T,稍后再试一次吧")
+			println(err.Error())
+			return
+		}
+		//TODO:鉴黄
+		ioutil.WriteFile("1.jpg", img, 0755)
+		base64Str := base64.StdEncoding.EncodeToString(img)
+		msg := "@[GETUSERNICK(" + strconv.FormatInt(args.CurrentPacket.Data.FromUserID, 10) + ")] 您的" + commandstr + "图收好\n[PICFLAG]"
+		if err != nil {
+			utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "发送失败T T:"+err.Error())
+			return
+		}
+		utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
+	}()
+	return nil
 }
 
 func SendJoin(c *gosocketio.Client) {

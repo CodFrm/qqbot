@@ -22,7 +22,7 @@ func SendPicByBase64(qqgroup int, At int64, Content string, Base64 string) (stri
 	tmp["groupid"] = 0
 	tmp["atUser"] = At
 	tmp1, _ := json.Marshal(tmp)
-	resp, err := (http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1)))
+	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
 	if err != nil {
 		return "", nil
 	}
@@ -32,7 +32,6 @@ func SendPicByBase64(qqgroup int, At int64, Content string, Base64 string) (stri
 }
 
 func SendMsg(qqgroup int, At int64, Content string) (string, error) {
-	//发送图文信息
 	tmp := make(map[string]interface{})
 	tmp["toUser"] = qqgroup
 	tmp["sendToType"] = 2

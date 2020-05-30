@@ -7,10 +7,25 @@ import (
 )
 
 type Config struct {
-	QQ   string
-	Addr string
-	Port int
-	Url  string
+	QQ    string
+	Addr  string
+	Port  int
+	Url   string
+	Pixiv Pixiv
+	Ssr   string
+	Redis Redis
+}
+
+type Pixiv struct {
+	User   string
+	Pwd    string
+	Cookie string
+}
+
+type Redis struct {
+	Addr     string
+	Password string
+	DB       int
 }
 
 var AppConfig Config
