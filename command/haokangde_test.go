@@ -17,7 +17,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestHaoKangDe(t *testing.T) {
-	HaoKangDe("少女")
+	HaoKangDe("儿童节礼物")
 }
 
 func TestResolve(t *testing.T) {

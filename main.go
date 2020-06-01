@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"github.com/CodFrm/iotqq-plugins/command"
 	"github.com/CodFrm/iotqq-plugins/config"
 	"github.com/CodFrm/iotqq-plugins/db"
@@ -10,7 +11,6 @@ import (
 	"github.com/CodFrm/iotqq-plugins/utils"
 	gosocketio "github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
-	"io/ioutil"
 	"log"
 	"regexp"
 	"strconv"
@@ -35,7 +35,7 @@ func main() {
 		log.Fatal(err)
 	}
 	err = c.On(gosocketio.OnDisconnection, func(h *gosocketio.Channel) {
-		log.Fatal("Disconnected")
+		//log.Fatal("Disconnected")
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -96,6 +96,7 @@ func main() {
 				}
 				utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
 				for k, v := range image[1:] {
+					time.Sleep(time.Second * 2)
 					base64Str, err := utils.ImageToBase64(v)
 					msg := "@[GETUSERNICK(" + strconv.FormatInt(args.CurrentPacket.Data.FromUserID, 10) + ")]第" + strconv.Itoa(k+2) + "张图[PICFLAG]"
 					if err != nil {
@@ -105,12 +106,19 @@ func main() {
 				}
 			}
 		} else if args.CurrentPacket.Data.MsgType == "TextMsg" {
-			regex := regexp.MustCompile("^来点好康的(.*?)图")
+			regex := regexp.MustCompile("^来((\\d*)份|点)好[康|看]的(.*?)(图|$)")
 			ret := regex.FindStringSubmatch(args.CurrentPacket.Data.Content)
 			if len(ret) > 0 {
-				hkd(args, "", ret[1])
+				hkd(args, "", ret)
 				return
 			}
+			regex = regexp.MustCompile("^来.?份[色|涩]图")
+			ret = regex.FindStringSubmatch(args.CurrentPacket.Data.Content)
+			if len(ret) > 0 {
+				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, "我又不是搞颜色的机器人")
+				return
+			}
+
 			groupid := args.CurrentPacket.Data.FromGroupID
 			if lastContent[groupid] == args.CurrentPacket.Data.Content {
 				lastNum[groupid]++
@@ -143,24 +151,41 @@ func main() {
 	}
 }
 
-func hkd(args model.Message, at string, commandstr string) error {
-	utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "图片搜索中...请稍后")
+func hkd(args model.Message, at string, commandstr []string) error {
+	num, _ := strconv.Atoi(commandstr[2])
+	if num <= 0 {
+		num = 1
+	} else if num > 4 {
+		utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, " 注意身体")
+		return errors.New("注意身体")
+	}
+	utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, " 图片搜索中...请稍后")
 	go func() {
-		img, err := command.HaoKangDe(commandstr)
-		if err != nil {
-			utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "服务器开小差了,搜索失败T T,稍后再试一次吧")
-			println(err.Error())
-			return
+		for i := 0; i < num; i++ {
+			img, err := command.HaoKangDe(commandstr[3])
+			if err != nil {
+				if err.Error() == "图片过少" {
+					utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, " "+err.Error())
+					return
+				}
+				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, " 服务器开小差了,搜索失败T T,稍后再试一次吧")
+				println(err.Error())
+				return
+			}
+			//TODO:鉴黄,来源
+			base64Str := base64.StdEncoding.EncodeToString(img)
+			msg := "@[GETUSERNICK(" + strconv.FormatInt(args.CurrentPacket.Data.FromUserID, 10) + ")] 您的"
+			if num == 1 {
+				msg += commandstr[3] + "图收好\n[PICFLAG]"
+			} else {
+				msg += strconv.Itoa(num) + "份" + commandstr[3] + "图收好\n[PICFLAG]"
+			}
+			if i >= 1 {
+				msg = ""
+			}
+			_, _ = utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
+			time.Sleep(time.Second * 3)
 		}
-		//TODO:鉴黄
-		ioutil.WriteFile("1.jpg", img, 0755)
-		base64Str := base64.StdEncoding.EncodeToString(img)
-		msg := "@[GETUSERNICK(" + strconv.FormatInt(args.CurrentPacket.Data.FromUserID, 10) + ")] 您的" + commandstr + "图收好\n[PICFLAG]"
-		if err != nil {
-			utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "发送失败T T:"+err.Error())
-			return
-		}
-		utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
 	}()
 	return nil
 }

@@ -14,6 +14,7 @@ type Config struct {
 	Pixiv Pixiv
 	Ssr   string
 	Redis Redis
+	Hdkey string
 }
 
 type Pixiv struct {

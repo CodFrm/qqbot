@@ -37,3 +37,14 @@ type PixivIllust struct {
 		} `json:"urls"`
 	} `json:"body"`
 }
+
+type PixivRankList struct {
+	Contents []*struct {
+		IllustId   int    `json:"illust_id"`
+		ProfileImg string `json:"profile_img"`
+		Url        string `json:"url"`
+		UserId     int    `json:"user_id"`
+		UserName   string `json:"user_name"`
+		Title      string `json:"title"`
+	} `json:"contents"`
+}
