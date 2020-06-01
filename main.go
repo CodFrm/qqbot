@@ -11,7 +11,9 @@ import (
 	"github.com/CodFrm/iotqq-plugins/utils"
 	gosocketio "github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -54,36 +56,69 @@ func main() {
 			if err := json.Unmarshal([]byte(args.CurrentPacket.Data.Content), &val); err != nil {
 				return
 			}
+			list, ok := val["GroupPic"].([]interface{})
+			picinfo := make([]*model.PicInfo, 0)
+			for _, v := range list {
+				m, ok := v.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				url, ok := m["Url"].(string)
+				if !ok {
+					continue
+				}
+				picinfo = append(picinfo, &model.PicInfo{Url: url})
+			}
+			if len(picinfo) == 0 {
+				return
+			}
+			if _, ok := config.AppConfig.ManageGroupMap[args.CurrentPacket.Data.FromGroupID]; ok {
+				for _, v := range picinfo {
+					resp, err := http.Get(v.Url)
+					if err != nil {
+						continue
+					}
+					defer resp.Body.Close()
+					picinfo[0].Byte, _ = ioutil.ReadAll(resp.Body)
+					if resp.ContentLength > 1024*1024 {
+						continue
+					}
+					if ok, err := command.IsAdult(v); err != nil {
+						if ok == 1 {
+							println(err)
+						} else if ok == 2 {
+							utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, err.Error())
+						} else if ok == 3 {
+							utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, err.Error())
+							utils.RevokeMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.MsgSeq, args.CurrentPacket.Data.MsgRandom)
+						}
+					}
+				}
+			}
 			content, ok := val["Content"].(string)
 			if !ok {
 				return
+			}
+			if picinfo[0].Byte == nil {
+				resp, err := http.Get(picinfo[0].Url)
+				if err != nil {
+					return
+				}
+				defer resp.Body.Close()
+				picinfo[0].Byte, _ = ioutil.ReadAll(resp.Body)
 			}
 			if strings.Index(content, "旋转图片") == 0 {
 				cmd := strings.Split(strings.TrimFunc(content, func(r rune) bool {
 					return r == '\r' || r == ' '
 				}), " ")
-				list, ok := val["GroupPic"].([]interface{})
 				if !ok {
 					return
 				}
-				picinfo := make([]*model.PicInfo, 0)
-				for _, v := range list {
-					m, ok := v.(map[string]interface{})
-					if !ok {
-						continue
-					}
-					url, ok := m["Url"].(string)
-					if !ok {
-						continue
-					}
-					picinfo = append(picinfo, &model.PicInfo{Url: url})
-				}
-				if len(picinfo) == 0 {
-					return
-				}
+				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "进行中,请稍后...")
 				image, err := command.RotatePic(cmd[1:], picinfo[0])
+				time.Sleep(time.Second * 2)
 				if err != nil {
-					utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, " error:"+err.Error())
+					utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "error:"+err.Error())
 					return
 				}
 				if len(image) == 0 {
@@ -104,6 +139,19 @@ func main() {
 					}
 					utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
 				}
+			} else if strings.Index(content, "图片鉴黄") == 0 {
+				if ok, err := command.IsAdult(picinfo[0]); err != nil {
+					if ok == 1 {
+						println(err)
+						utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "服务器开小差了,鉴图失败")
+					} else if ok == 2 {
+						utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "疑似色图")
+					} else if ok == 3 {
+						utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "就是色图,铐起来")
+					}
+				} else {
+					utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "正常图片")
+				}
 			}
 		} else if args.CurrentPacket.Data.MsgType == "TextMsg" {
 			regex := regexp.MustCompile("^来((\\d*)份|点)好[康|看]的(.*?)(图|$)")
@@ -115,7 +163,7 @@ func main() {
 			regex = regexp.MustCompile("^来.?份[色|涩]图")
 			ret = regex.FindStringSubmatch(args.CurrentPacket.Data.Content)
 			if len(ret) > 0 {
-				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, "我又不是搞颜色的机器人")
+				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "我又不是搞颜色的机器人")
 				return
 			}
 
@@ -128,6 +176,14 @@ func main() {
 			lastContent[groupid] = args.CurrentPacket.Data.Content
 			if lastNum[groupid] == 2 {
 				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, args.CurrentPacket.Data.Content)
+			}
+		} else if args.CurrentPacket.Data.MsgType == "AtMsg" {
+			if strings.Index(args.CurrentPacket.Data.Content, "help") != -1 || strings.Index(args.CurrentPacket.Data.Content, "功能") != -1 ||
+				strings.Index(args.CurrentPacket.Data.Content, "帮助") != -1 || strings.Index(args.CurrentPacket.Data.Content, "菜单") != -1 {
+				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, "1.来点好康的,触发指令:'来1份好康的,来点好看的,来点好看的风景图',享受生活的美好\n"+
+					"2.旋转图片,触发指令:'旋转图片 垂直/镜像/翻转/放大/缩小/高清重制 [图片]',更方便快捷的图片编辑\n"+
+					"3.图片鉴黄,触发指令:'图片鉴黄 [图片]',让我们来猎杀那些色批\n"+"还有更多神秘功能待你探索.")
+				return
 			}
 		}
 

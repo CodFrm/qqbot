@@ -7,14 +7,17 @@ import (
 )
 
 type Config struct {
-	QQ    string
-	Addr  string
-	Port  int
-	Url   string
-	Pixiv Pixiv
-	Ssr   string
-	Redis Redis
-	Hdkey string
+	QQ             string
+	Addr           string
+	Port           int
+	Url            string
+	Pixiv          Pixiv
+	Ssr            string
+	Redis          Redis
+	Hdkey          string
+	ModerateKey    string `yaml:"moderate-key"`
+	ManageGroup    []int  `yaml:"manage-group"`
+	ManageGroupMap map[int]struct{}
 }
 
 type Pixiv struct {
@@ -40,6 +43,10 @@ func Init(filename string) error {
 	err = yaml.Unmarshal(file, &AppConfig)
 	if err != nil {
 		return fmt.Errorf("unmarshal error: %v", err)
+	}
+	AppConfig.ManageGroupMap = make(map[int]struct{})
+	for _, v := range AppConfig.ManageGroup {
+		AppConfig.ManageGroupMap[v] = struct{}{}
 	}
 	return nil
 }

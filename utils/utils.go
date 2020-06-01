@@ -11,6 +11,7 @@ import (
 	"image/png"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -98,4 +99,14 @@ func CloudflareResolve(hostname string) (string, error) {
 	}
 	cfCache[hostname] = tmp[0].(map[string]interface{})["data"].(string)
 	return cfCache[hostname], nil
+}
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func RandStringRunes(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }

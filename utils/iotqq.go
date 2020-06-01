@@ -51,3 +51,18 @@ func SendMsg(qqgroup int, At int64, Content string) (string, error) {
 	body, _ := ioutil.ReadAll(resp.Body)
 	return string(body), nil
 }
+
+func RevokeMsg(qqgroup int, MsgSeq int, MsgRandom int) (string, error) {
+	tmp := make(map[string]interface{})
+	tmp["GroupID"] = qqgroup
+	tmp["MsgSeq"] = MsgSeq
+	tmp["MsgRandom"] = MsgRandom
+	tmp1, _ := json.Marshal(tmp)
+	resp, err := (http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=RevokeMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1)))
+	if err != nil {
+		return "", nil
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	return string(body), nil
+}
