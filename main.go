@@ -139,7 +139,7 @@ func main() {
 					}
 					utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
 				}
-			} else if strings.Index(content, "图片鉴黄") == 0 {
+			} else if strings.Index(content, "图片鉴") == 0 && (strings.Index(content, "黄") != -1 || strings.Index(content, "色") != -1) {
 				if ok, err := command.IsAdult(picinfo[0]); err != nil {
 					if ok == 1 {
 						println(err)
@@ -148,13 +148,20 @@ func main() {
 						utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "疑似色图")
 					} else if ok == 3 {
 						utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "就是色图,铐起来")
+					} else if ok == 4 {
+						utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, err.Error())
 					}
 				} else {
-					utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "正常图片")
+					if strings.Index(content, "色") != -1 {
+						str := utils.FileBase64("./data/img/1.jpg")
+						utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "", str)
+					} else {
+						utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "正常图片")
+					}
 				}
 			}
 		} else if args.CurrentPacket.Data.MsgType == "TextMsg" {
-			regex := regexp.MustCompile("^来((\\d*)份|点)好[康|看]的(.*?)(图|$)")
+			regex := regexp.MustCompile("来((\\d*)份|点)好[康|看]的(.*?)(图|$)")
 			ret := regex.FindStringSubmatch(args.CurrentPacket.Data.Content)
 			if len(ret) > 0 {
 				hkd(args, "", ret)
@@ -182,7 +189,8 @@ func main() {
 				strings.Index(args.CurrentPacket.Data.Content, "帮助") != -1 || strings.Index(args.CurrentPacket.Data.Content, "菜单") != -1 {
 				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, "1.来点好康的,触发指令:'来1份好康的,来点好看的,来点好看的风景图',享受生活的美好\n"+
 					"2.旋转图片,触发指令:'旋转图片 垂直/镜像/翻转/放大/缩小/高清重制 [图片]',更方便快捷的图片编辑\n"+
-					"3.图片鉴黄,触发指令:'图片鉴黄 [图片]',让我们来猎杀那些色批\n"+"还有更多神秘功能待你探索.")
+					"3.图片鉴黄,触发指令:'图片鉴黄/色 [图片]',让我们来猎杀那些色批\n"+
+					"4.清理潜水,触发指令:'踢潜水 人数 舔狗/面子/普通模式',更方便快捷的清人工具,需要有管理员权限"+"还有更多神秘功能待你探索.")
 				return
 			}
 		}

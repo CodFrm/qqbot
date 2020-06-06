@@ -20,11 +20,16 @@ import (
 
 func ImageToBase64(img image.Image) (string, error) {
 	buffer := bytes.NewBuffer(nil)
-	if err := png.Encode(buffer, img); err != nil {
+	if err := jpeg.Encode(buffer, img, &jpeg.Options{Quality: 100}); err != nil {
 		return "", err
 	}
 	ret := base64.StdEncoding.EncodeToString(buffer.Bytes())
 	return ret, nil
+}
+
+func FileBase64(path string) string {
+	f, _ := ioutil.ReadFile(path)
+	return base64.StdEncoding.EncodeToString(f)
 }
 
 func SaveImage(path string, img image.Image) (err error) {
@@ -40,7 +45,7 @@ func SaveImage(path string, img image.Image) (err error) {
 
 func ImageCompression(img image.Image) (image.Image, error) {
 	buffer := bytes.NewBuffer(nil)
-	if err := jpeg.Encode(buffer, img, &jpeg.Options{Quality: 90}); err != nil {
+	if err := jpeg.Encode(buffer, img, &jpeg.Options{Quality: 100}); err != nil {
 		return nil, err
 	}
 	return jpeg.Decode(buffer)

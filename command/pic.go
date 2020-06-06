@@ -224,13 +224,16 @@ func IsAdult(img *model.PicInfo) (int, error) {
 	if err := json.Unmarshal(body, m); err != nil {
 		return 1, err
 	}
-	if m.Predictions.Adult > 75 {
-		id := utils.RandStringRunes(32) + strconv.Itoa(int(m.Predictions.Adult))
-		ioutil.WriteFile("./data/adult/"+id+".png", img.Byte, 0775)
-		if m.Predictions.Adult > 90 {
-			return 3, errors.New("你的图片带有不宜内容,请注意你的言辞,图片已撤回,证据已保留ID:" + id)
+	if m.Predictions.Adult > 50 {
+		id := utils.RandStringRunes(32)
+		_ = ioutil.WriteFile("./data/adult/"+id+strconv.Itoa(int(m.Predictions.Adult))+".png", img.Byte, 0775)
+		if m.Predictions.Adult > 70 {
+			if m.Predictions.Adult > 90 {
+				return 3, errors.New("你的图片带有不宜内容,请注意你的言辞,图片已撤回,证据已保留ID:" + id)
+			}
+			return 2, errors.New("你的图片可能带有不宜内容,请注意你的言辞,证据已保留ID:" + id)
 		}
-		return 2, errors.New("你的图片可能带有不宜内容,请注意你的言辞,证据已保留ID:" + id)
+		return 4, errors.New("有点涩涩,保存了ID:" + id)
 	}
 	return 1, nil
 }

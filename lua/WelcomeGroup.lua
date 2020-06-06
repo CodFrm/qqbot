@@ -8,6 +8,12 @@ function ReceiveGroupMsg(CurrentQQ, data)
     return 1
 end
 
+local clock = os.clock
+function sleep(n)  -- seconds
+    local t0 = clock()
+    while clock() - t0 <= n do end
+end
+
 function ReceiveEvents(CurrentQQ, data, extData)
     if data.MsgType == "ON_EVENT_GROUP_JOIN" then
         ret = Api.Api_GetUserInfo(CurrentQQ, extData.UserID)
@@ -26,6 +32,7 @@ function ReceiveEvents(CurrentQQ, data, extData)
                     fileMd5 = ""
                 }
             )
+            sleep(2)
             Api.Api_SendMsg(
                 CurrentQQ,
                 {
