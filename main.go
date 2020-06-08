@@ -161,7 +161,7 @@ func main() {
 				}
 			}
 		} else if args.CurrentPacket.Data.MsgType == "TextMsg" {
-			regex := regexp.MustCompile("来((\\d*)份|点)好[康|看]的(.*?)(图|$)")
+			regex := regexp.MustCompile("^来((\\d*)份|点)好[康|看]的(.*?)(图|$)")
 			ret := regex.FindStringSubmatch(args.CurrentPacket.Data.Content)
 			if len(ret) > 0 {
 				hkd(args, "", ret)
@@ -192,6 +192,22 @@ func main() {
 					"3.图片鉴黄,触发指令:'图片鉴黄/色 [图片]',让我们来猎杀那些色批\n"+
 					"4.清理潜水,触发指令:'踢潜水 人数 舔狗/面子/普通模式',更方便快捷的清人工具,需要有管理员权限"+"还有更多神秘功能待你探索.")
 				return
+			}
+		} else if args.CurrentPacket.Data.MsgType == "ReplayMsg" {
+			if strings.Index(args.CurrentPacket.Data.Content, "求原图") != -1 {
+				reg := regexp.MustCompile(`pixiv:(\d+)`)
+				cmd := reg.FindStringSubmatch(args.CurrentPacket.Data.Content)
+				if len(cmd) > 0 {
+					utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "原图较大,请耐心等待")
+					imgbyte, err := command.GetPixivImg(cmd[1])
+					if err != nil {
+						time.Sleep(time.Second)
+						utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "系统错误,发送失败:"+err.Error())
+						return
+					}
+					base64Str := base64.StdEncoding.EncodeToString(imgbyte)
+					_, _ = utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "原图收好\n[PICFLAG]", base64Str)
+				}
 			}
 		}
 
@@ -226,7 +242,7 @@ func hkd(args model.Message, at string, commandstr []string) error {
 	utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, " 图片搜索中...请稍后")
 	go func() {
 		for i := 0; i < num; i++ {
-			img, err := command.HaoKangDe(commandstr[3])
+			img, imgInfo, err := command.HaoKangDe(commandstr[3])
 			if err != nil {
 				if err.Error() == "图片过少" {
 					utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, " "+err.Error())
@@ -236,17 +252,17 @@ func hkd(args model.Message, at string, commandstr []string) error {
 				println(err.Error())
 				return
 			}
-			//TODO:鉴黄,来源
 			base64Str := base64.StdEncoding.EncodeToString(img)
-			msg := "@[GETUSERNICK(" + strconv.FormatInt(args.CurrentPacket.Data.FromUserID, 10) + ")] 您的"
+			msg := "您的"
 			if num == 1 {
-				msg += commandstr[3] + "图收好\n[PICFLAG]"
+				msg += commandstr[3] + "图收好\n"
 			} else {
-				msg += strconv.Itoa(num) + "份" + commandstr[3] + "图收好\n[PICFLAG]"
+				msg += strconv.Itoa(num) + "份" + commandstr[3] + "图收好\n"
 			}
 			if i >= 1 {
 				msg = ""
 			}
+			msg += "pixiv:" + imgInfo.Id + " " + imgInfo.Title + " 画师:" + imgInfo.UserName + "\n" + "https://www.pixiv.net/artworks/" + imgInfo.Id + "\n[PICFLAG]"
 			_, _ = utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
 			time.Sleep(time.Second * 3)
 		}

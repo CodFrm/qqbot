@@ -67,7 +67,7 @@ func RotatePic(command []string, pic *model.PicInfo) ([]image.Image, error) {
 					return nil, errors.New("高清重制失败")
 				}
 				hd_deal = true
-			case "灰白":
+			case "灰白", "RIP", "R.I.P.":
 				tmpimg = gray(tmpimg)
 			case "颜色反转":
 				tmpimg = reverse(tmpimg)

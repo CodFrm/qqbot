@@ -20,16 +20,43 @@ import (
 
 var PicIsNil = errors.New("我真的一张都没有了")
 
-func HaoKangDe(command string) ([]byte, error) {
+func HaoKangDe(command string) ([]byte, *model.PixivPicItem, error) {
 	page, _ := db.Redis.Get("pixivlist" + command + ":page").Int()
 	if page <= 0 {
 		page = 1
 	}
 	img, err := getPixivPicByCommand(command, page)
 	if err != nil {
+		return nil, nil, err
+	}
+	imgbyte, err := downloadPixivPic(img)
+	return imgbyte, img, err
+}
+
+func GetPixivImg(id string) ([]byte, error) {
+	_, err := os.Stat("./data/pixiv/" + id + "_big.jpg")
+	if err == nil {
+		return nil, errors.New("已经发送过了啦")
+	}
+	b, err := ioutil.ReadFile("./data/pixiv/" + id + ".json")
+	if err != nil {
+		return nil, errors.New("图片缓存不存在,请给我看过的图片")
+	}
+	m := &model.PixivIllust{}
+	if err := json.Unmarshal(b, m); err != nil {
+		return nil, errors.New("错误的缓存")
+	}
+	data, err := utils.HttpGet(m.Body.Urls.Original, map[string]string{
+		"Cookie":  config.AppConfig.Pixiv.Cookie,
+		"Referer": "https://www.pixiv.net/artworks/" + id,
+	}, proxy)
+	if err != nil {
+		return nil, errors.New("网络错误,请稍后重试")
+	}
+	if err := ioutil.WriteFile("./data/pixiv/"+id+"_big.jpg", data, 0755); err != nil {
 		return nil, err
 	}
-	return downloadPixivPic(img)
+	return data, nil
 }
 
 func getPixivPicByCommand(command string, page int) (*model.PixivPicItem, error) {
@@ -81,7 +108,7 @@ func downloadPixivPic(pic *model.PixivPicItem) ([]byte, error) {
 			data, err = utils.HttpGet(m.Body.Urls.Small, map[string]string{
 				"Cookie":  config.AppConfig.Pixiv.Cookie,
 				"Referer": "https://www.pixiv.net/artworks/" + pic.Id,
-			}, nil)
+			}, proxy)
 			if err := ioutil.WriteFile("./data/pixiv/"+pic.Id+".jpg", data, 0755); err != nil {
 				return nil, err
 			}
