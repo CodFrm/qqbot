@@ -188,7 +188,7 @@ func main() {
 			if strings.Index(args.CurrentPacket.Data.Content, "help") != -1 || strings.Index(args.CurrentPacket.Data.Content, "功能") != -1 ||
 				strings.Index(args.CurrentPacket.Data.Content, "帮助") != -1 || strings.Index(args.CurrentPacket.Data.Content, "菜单") != -1 {
 				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, "1.来点好康的,触发指令:'来1份好康的,来点好看的,来点好看的风景图',享受生活的美好\n"+
-					"2.旋转图片,触发指令:'旋转图片 垂直/镜像/翻转/放大/缩小/高清重制 [图片]',更方便快捷的图片编辑\n"+
+					"2.旋转图片,触发指令:'旋转图片 垂直/镜像/翻转/放大/缩小/灰白/颜色反转/高清重制 [图片]',更方便快捷的图片编辑\n"+
 					"3.图片鉴黄,触发指令:'图片鉴黄/色 [图片]',让我们来猎杀那些色批\n"+
 					"4.清理潜水,触发指令:'踢潜水 人数 舔狗/面子/普通模式',更方便快捷的清人工具,需要有管理员权限"+"还有更多神秘功能待你探索.")
 				return

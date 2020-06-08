@@ -81,7 +81,7 @@ func downloadPixivPic(pic *model.PixivPicItem) ([]byte, error) {
 			data, err = utils.HttpGet(m.Body.Urls.Small, map[string]string{
 				"Cookie":  config.AppConfig.Pixiv.Cookie,
 				"Referer": "https://www.pixiv.net/artworks/" + pic.Id,
-			}, proxy)
+			}, nil)
 			if err := ioutil.WriteFile("./data/pixiv/"+pic.Id+".jpg", data, 0755); err != nil {
 				return nil, err
 			}

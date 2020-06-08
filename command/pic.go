@@ -10,6 +10,7 @@ import (
 	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/nfnt/resize"
 	"image"
+	"image/color"
 	_ "image/jpeg"
 	"image/png"
 	_ "image/png"
@@ -66,6 +67,10 @@ func RotatePic(command []string, pic *model.PicInfo) ([]image.Image, error) {
 					return nil, errors.New("高清重制失败")
 				}
 				hd_deal = true
+			case "灰白":
+				tmpimg = gray(tmpimg)
+			case "颜色反转":
+				tmpimg = reverse(tmpimg)
 			default:
 				continue
 			}
@@ -73,6 +78,32 @@ func RotatePic(command []string, pic *model.PicInfo) ([]image.Image, error) {
 		retImage = append(retImage, tmpimg)
 	}
 	return retImage, nil
+}
+
+func reverse(m image.Image) image.Image {
+	reverse := image.NewRGBA(image.Rect(0, 0, m.Bounds().Dx(), m.Bounds().Dy()))
+	for x := m.Bounds().Min.X; x < m.Bounds().Max.X; x++ {
+		for y := m.Bounds().Min.Y; y < m.Bounds().Max.Y; y++ {
+			colorRgb := m.At(x, y)
+			r, g, b, a := colorRgb.RGBA()
+			reverse.Set(x, y, color.RGBA{uint8(255 - (r >> 8)), uint8(255 - (g >> 8)), uint8(255 - (b >> 8)), uint8(a >> 8)})
+		}
+	}
+	return reverse
+}
+
+func gray(m image.Image) image.Image {
+	gray := image.NewRGBA(image.Rect(0, 0, m.Bounds().Dx(), m.Bounds().Dy()))
+	for x := m.Bounds().Min.X; x < m.Bounds().Max.X; x++ {
+		for y := m.Bounds().Min.Y; y < m.Bounds().Max.Y; y++ {
+			colorRgb := m.At(x, y)
+			_, g, _, a := colorRgb.RGBA()
+			g_uint8 := uint8(g >> 8)
+			a_uint8 := uint8(a >> 8)
+			gray.Set(x, y, color.RGBA{g_uint8, g_uint8, g_uint8, a_uint8})
+		}
+	}
+	return gray
 }
 
 type hdRespond struct {
