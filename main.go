@@ -13,6 +13,7 @@ import (
 	"github.com/graarh/golang-socketio/transport"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -188,6 +189,8 @@ func main() {
 			if strings.Index(args.CurrentPacket.Data.Content, "help") != -1 || strings.Index(args.CurrentPacket.Data.Content, "功能") != -1 ||
 				strings.Index(args.CurrentPacket.Data.Content, "帮助") != -1 || strings.Index(args.CurrentPacket.Data.Content, "菜单") != -1 {
 				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, "1.来点好康的,触发指令:'来1份好康的,来点好看的,来点好看的风景图',享受生活的美好\n"+
+					"1.1.求原图,触发指令:'回复+求原图',可获得原图内容\n"+
+					"1.2.再来一点,触发指令:'回复+再来一/亿点',可获得更多好康的\n"+
 					"2.旋转图片,触发指令:'旋转图片 垂直/镜像/翻转/放大/缩小/灰白/颜色反转/高清重制 [图片]',更方便快捷的图片编辑\n"+
 					"3.图片鉴黄,触发指令:'图片鉴黄/色 [图片]',让我们来猎杀那些色批\n"+
 					"4.清理潜水,触发指令:'踢潜水 人数 舔狗/面子/普通模式',更方便快捷的清人工具,需要有管理员权限"+"还有更多神秘功能待你探索.")
@@ -207,6 +210,31 @@ func main() {
 					}
 					base64Str := base64.StdEncoding.EncodeToString(imgbyte)
 					_, _ = utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "原图收好\n[PICFLAG]", base64Str)
+				}
+			} else if m := commandMatch(args.CurrentPacket.Data.Content, "再来(一|亿)点"); len(m) > 0 {
+				reg := regexp.MustCompile(`pixiv:(\d+)`)
+				cmd := reg.FindStringSubmatch(args.CurrentPacket.Data.Content)
+				if len(cmd) > 0 {
+					utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, " 图片检索中...请稍后")
+					n := 1
+					if m[1] == "亿" {
+						n = rand.Intn(3) + 2
+					}
+					for i := 0; n > i; i++ {
+						img, imgInfo, err := command.ZaiLaiYiDian(cmd[1])
+						if err != nil {
+							if err.Error() == "我真的一张都没有了" {
+								utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, " "+err.Error())
+								return
+							}
+							utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, " 服务器开小差了,搜索失败T T,稍后再试一次吧")
+							return
+						}
+						base64Str := base64.StdEncoding.EncodeToString(img)
+						msg := "pixiv:" + imgInfo.Id + " " + imgInfo.Title + " 画师:" + imgInfo.UserName + "\n" + "https://www.pixiv.net/artworks/" + imgInfo.Id + "\n[PICFLAG]"
+						_, _ = utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
+						time.Sleep(time.Second * 3)
+					}
 				}
 			}
 		}
@@ -229,6 +257,11 @@ func main() {
 			}
 		}
 	}
+}
+
+func commandMatch(content string, command string) []string {
+	reg := regexp.MustCompile(command)
+	return reg.FindStringSubmatch(content)
 }
 
 func hkd(args model.Message, at string, commandstr []string) error {

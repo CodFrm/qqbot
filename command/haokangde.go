@@ -59,6 +59,64 @@ func GetPixivImg(id string) ([]byte, error) {
 	return data, nil
 }
 
+func readPicInfoCache(id string) (*model.PixivIllust, error) {
+	b, err := ioutil.ReadFile("./data/pixiv/" + id + ".json")
+	if err != nil {
+		return nil, errors.New("图片缓存不存在,请给我看过的图片")
+	}
+	m := &model.PixivIllust{}
+	if err := json.Unmarshal(b, m); err != nil {
+		return nil, errors.New("错误的缓存")
+	}
+	return m, nil
+}
+
+//再来一(亿)点
+func ZaiLaiYiDian(id string) ([]byte, *model.PixivPicItem, error) {
+	picList, err := getRelatedPixivPic(id)
+	if err != nil {
+		return nil, nil, err
+	}
+	picInfo, err := uniqueRand(picList)
+	if err != nil {
+		return nil, nil, errors.New("我真的一张都没有了")
+	}
+	imgbyte, err := downloadPixivPic(picInfo)
+	if err != nil {
+		if err.Error() == "R-18,请重新选择" {
+			return ZaiLaiYiDian(id)
+		}
+		return nil, nil, err
+	}
+	return imgbyte, picInfo, nil
+}
+
+func getRelatedPixivPic(id string) ([]*model.PixivPicItem, error) {
+	ret := make([]*model.PixivPicItem, 0)
+	if err := db.GetOrSet("pixiv:recommend"+id, &ret, func() (interface{}, error) {
+		b, err := utils.HttpGet("https://www.pixiv.net/ajax/illust/"+id+"/recommend/init?limit=18&lang=zh", map[string]string{
+			"Cookie": config.AppConfig.Pixiv.Cookie,
+		}, proxy)
+		if err != nil {
+			return nil, err
+		}
+		m := &model.PixivRecommend{}
+		if err := json.Unmarshal(b, m); err != nil {
+			return nil, err
+		}
+		for _, v := range m.Body.Illusts {
+			ret = append(ret, &model.PixivPicItem{Id: v.Id})
+		}
+		for _, v := range m.Body.NextIds {
+			ret = append(ret, &model.PixivPicItem{Id: v})
+		}
+		return ret, nil
+	}, db.WithTTL(time.Hour*24*30)); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
 func getPixivPicByCommand(command string, page int) (*model.PixivPicItem, error) {
 	var data []*model.PixivPicItem
 	var err error
@@ -70,7 +128,7 @@ func getPixivPicByCommand(command string, page int) (*model.PixivPicItem, error)
 	if err != nil {
 		return nil, err
 	}
-	img, err := uniqueRand(command, data)
+	img, err := uniqueRand(data)
 	if err != nil {
 		if err == PicIsNil {
 			page = page + 1
@@ -100,7 +158,11 @@ func downloadPixivPic(pic *model.PixivPicItem) ([]byte, error) {
 			if err := json.Unmarshal(data, m); err != nil {
 				return nil, err
 			}
-
+			if isR18(m) {
+				return nil, errors.New("R-18,请重新选择")
+			}
+			pic.UserName = m.Body.UserName
+			pic.Title = m.Body.Title
 			if err := ioutil.WriteFile("./data/pixiv/"+pic.Id+".json", data, 0755); err != nil {
 				return nil, err
 			}
@@ -115,6 +177,16 @@ func downloadPixivPic(pic *model.PixivPicItem) ([]byte, error) {
 			r = bytes.NewReader(data)
 		}
 	} else {
+		data, err := ioutil.ReadFile("./data/pixiv/" + pic.Id + ".json")
+		if err != nil {
+			return nil, err
+		}
+		m := &model.PixivIllust{}
+		if err := json.Unmarshal(data, m); err != nil {
+			return nil, err
+		}
+		pic.UserName = m.Body.UserName
+		pic.Title = m.Body.Title
 		file, err := os.Open("./data/pixiv/" + pic.Id + ".jpg")
 		if err != nil {
 			return nil, err
@@ -125,11 +197,20 @@ func downloadPixivPic(pic *model.PixivPicItem) ([]byte, error) {
 	return ioutil.ReadAll(r)
 }
 
+func isR18(p *model.PixivIllust) bool {
+	for _, v := range p.Body.Tags.Tags {
+		if v.Tag == "R-18" {
+			return true
+		}
+	}
+	return false
+}
+
 //30天内不再重复
-func uniqueRand(tag string, data []*model.PixivPicItem) (*model.PixivPicItem, error) {
+func uniqueRand(data []*model.PixivPicItem) (*model.PixivPicItem, error) {
 	randList := make([]*model.PixivPicItem, 0)
 	for _, v := range data {
-		if !db.Redis.HExists("uniqueRand"+tag, v.Id).Val() {
+		if db.Redis.Exists("uniqueRand:"+v.Id).Val() == 0 {
 			randList = append(randList, v)
 		}
 	}
@@ -137,10 +218,7 @@ func uniqueRand(tag string, data []*model.PixivPicItem) (*model.PixivPicItem, er
 		return nil, PicIsNil
 	}
 	ret := randList[rand.Intn(len(randList))]
-	db.Redis.HSet("uniqueRand"+tag, ret.Id, "1")
-	if db.Redis.HLen("uniqueRand"+tag).Val() <= 1 {
-		db.Redis.Expire("uniqueRand"+tag, time.Second*86400*30)
-	}
+	db.Redis.Set("uniqueRand:"+ret.Id, "1", time.Second*86400*30)
 	return ret, nil
 }
 
@@ -256,7 +334,18 @@ func getPicList(tag string, hot int, page int) func() (i interface{}, err error)
 				if len(relateTags) == 0 {
 					return nil, errors.New("图片过少")
 				} else {
-					relateTag = relateTags[0]
+					f := false
+					for _, v := range relateTags {
+						if v == relateTag {
+							continue
+						}
+						f = true
+						relateTag = v
+						break
+					}
+					if !f {
+						return nil, errors.New("图片过少")
+					}
 				}
 				setTagCache(tag, relateTag, 0)
 				SetPage(tag, 1)

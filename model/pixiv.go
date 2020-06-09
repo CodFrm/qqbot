@@ -35,6 +35,24 @@ type PixivIllust struct {
 			Original string `json:"original"`
 			Small    string `json:"small"`
 		} `json:"urls"`
+		UserIllusts map[string]interface{} `json:"userIllusts"`
+		IllustTitle string                 `json:"illustTitle"`
+		Title       string                 `json:"title"`
+		UserName    string                 `json:"userName"`
+		Tags        struct {
+			Tags []struct {
+				Tag string `json:"tag"`
+			} `json:"tags"`
+		} `json:"tags"`
+	} `json:"body"`
+}
+
+type PixivRecommend struct {
+	Body struct {
+		Illusts []struct {
+			Id string `json:"id"`
+		} `json:"illusts"`
+		NextIds []string `json:"nextIds"`
 	} `json:"body"`
 }
 
