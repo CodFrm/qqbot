@@ -52,6 +52,12 @@ func main() {
 	lastContent := make(map[int]string)
 	lastNum := make(map[int]int)
 	if err := c.On("OnGroupMsgs", func(h *gosocketio.Channel, args model.Message) {
+		if err := command.IsBlackList(strconv.FormatInt(args.CurrentPacket.Data.FromUserID, 10)); err != nil {
+			return
+		}
+		if err := command.IsBlackList("group" + strconv.Itoa(args.CurrentPacket.Data.FromGroupID)); err != nil {
+			return
+		}
 		if args.CurrentPacket.Data.MsgType == "PicMsg" {
 			val := make(map[string]interface{})
 			if err := json.Unmarshal([]byte(args.CurrentPacket.Data.Content), &val); err != nil {
@@ -168,13 +174,30 @@ func main() {
 				hkd(args, "", ret)
 				return
 			}
-			regex = regexp.MustCompile("^来.?份[色|涩]图")
-			ret = regex.FindStringSubmatch(args.CurrentPacket.Data.Content)
-			if len(ret) > 0 {
-				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "我又不是搞颜色的机器人")
+			if cmd := commandMatch(args.CurrentPacket.Data.Content, "^来(点|丶)(.*?)$"); len(cmd) > 0 {
+				hkd(args, "", []string{
+					"", "", "", cmd[2],
+				})
+			} else if cmd := commandMatch(args.CurrentPacket.Data.Content, "^关联tag (.+?) (.+?)$"); len(cmd) > 0 {
+				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUserID]; !ok {
+					return
+				}
+				if err := command.RelateTag(cmd[1], cmd[2]); err != nil {
+					utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, err.Error())
+					return
+				}
+				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "OK")
 				return
+			} else if cmd := commandMatch(args.CurrentPacket.Data.Content, "黑名单 (.*?) (\\d)"); len(cmd) > 0 {
+				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUserID]; !ok {
+					return
+				}
+				if err := command.BlackList(cmd[1], cmd[2]); err != nil {
+					sendErr(args, err)
+					return
+				}
+				sendErr(args, errors.New("OK"))
 			}
-
 			groupid := args.CurrentPacket.Data.FromGroupID
 			if lastContent[groupid] == args.CurrentPacket.Data.Content {
 				lastNum[groupid]++
@@ -185,18 +208,7 @@ func main() {
 			if lastNum[groupid] == 2 {
 				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, args.CurrentPacket.Data.Content)
 			}
-		} else if args.CurrentPacket.Data.MsgType == "AtMsg" {
-			if strings.Index(args.CurrentPacket.Data.Content, "help") != -1 || strings.Index(args.CurrentPacket.Data.Content, "功能") != -1 ||
-				strings.Index(args.CurrentPacket.Data.Content, "帮助") != -1 || strings.Index(args.CurrentPacket.Data.Content, "菜单") != -1 {
-				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, "1.来点好康的,触发指令:'来1份好康的,来点好看的,来点好看的风景图',享受生活的美好\n"+
-					"1.1.求原图,触发指令:'回复+求原图',可获得原图内容\n"+
-					"1.2.再来一点,触发指令:'回复+再来一/亿点',可获得更多好康的\n"+
-					"2.旋转图片,触发指令:'旋转图片 垂直/镜像/翻转/放大/缩小/灰白/颜色反转/高清重制 [图片]',更方便快捷的图片编辑\n"+
-					"3.图片鉴黄,触发指令:'图片鉴黄/色 [图片]',让我们来猎杀那些色批\n"+
-					"4.清理潜水,触发指令:'踢潜水 人数 舔狗/面子/普通模式',更方便快捷的清人工具,需要有管理员权限"+"还有更多神秘功能待你探索.")
-				return
-			}
-		} else if args.CurrentPacket.Data.MsgType == "ReplayMsg" {
+		} else if args.CurrentPacket.Data.MsgType == "ReplayMsg" || args.CurrentPacket.Data.MsgType == "AtMsg" {
 			if strings.Index(args.CurrentPacket.Data.Content, "求原图") != -1 {
 				reg := regexp.MustCompile(`pixiv:(\d+)`)
 				cmd := reg.FindStringSubmatch(args.CurrentPacket.Data.Content)
@@ -211,7 +223,7 @@ func main() {
 					base64Str := base64.StdEncoding.EncodeToString(imgbyte)
 					_, _ = utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "原图收好\n[PICFLAG]", base64Str)
 				}
-			} else if m := commandMatch(args.CurrentPacket.Data.Content, "再来(一|亿)点"); len(m) > 0 {
+			} else if m := commandMatch(args.CurrentPacket.Data.Content, "再来(一|亿)(点|份)"); len(m) > 0 {
 				reg := regexp.MustCompile(`pixiv:(\d+)`)
 				cmd := reg.FindStringSubmatch(args.CurrentPacket.Data.Content)
 				if len(cmd) > 0 {
@@ -236,6 +248,31 @@ func main() {
 						time.Sleep(time.Second * 3)
 					}
 				}
+			} else if cmd := commandMatch(args.CurrentPacket.Data.Content, "黑名单(.*?)(\\d)"); len(cmd) > 0 {
+				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUserID]; !ok {
+					return
+				}
+				m := &struct {
+					UserID []int64 `json:"UserID"`
+				}{}
+				if err := json.Unmarshal([]byte(args.CurrentPacket.Data.Content), m); err != nil {
+					sendErr(args, err)
+					return
+				}
+				for _, v := range m.UserID {
+					command.BlackList(strconv.FormatInt(v, 10), cmd[2])
+				}
+				sendErr(args, errors.New("OK"))
+			} else if strings.Index(args.CurrentPacket.Data.Content, "help") != -1 || strings.Index(args.CurrentPacket.Data.Content, "功能") != -1 ||
+				strings.Index(args.CurrentPacket.Data.Content, "帮助") != -1 || strings.Index(args.CurrentPacket.Data.Content, "菜单") != -1 {
+				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, "1.来点好康的,触发指令:'来1份好康的,来点好看的,来点好看的风景图',享受生活的美好\n"+
+					"1.1.求原图,触发指令:'回复+求原图',可获得原图内容\n"+
+					"1.2.再来一点,触发指令:'回复+再来一/亿点',可获得更多好康的\n"+
+					"2.旋转图片,触发指令:'旋转图片 垂直/镜像/翻转/放大/缩小/灰白/颜色反转/高清重制 [图片]',更方便快捷的图片编辑\n"+
+					"3.图片鉴黄,触发指令:'图片鉴黄/色 [图片]',让我们来猎杀那些色批\n"+
+					"4.清理潜水,触发指令:'踢潜水 人数 舔狗/面子/普通模式',更方便快捷的清人工具,需要有管理员权限\n"+
+					"还有更多神秘功能待你探索.")
+				return
 			}
 		}
 
@@ -257,6 +294,10 @@ func main() {
 			}
 		}
 	}
+}
+
+func sendErr(m model.Message, err error) {
+	utils.SendMsg(m.CurrentPacket.Data.FromGroupID, m.CurrentPacket.Data.FromUserID, err.Error())
 }
 
 func commandMatch(content string, command string) []string {
@@ -295,7 +336,7 @@ func hkd(args model.Message, at string, commandstr []string) error {
 			if i >= 1 {
 				msg = ""
 			}
-			msg += "pixiv:" + imgInfo.Id + " " + imgInfo.Title + " 画师:" + imgInfo.UserName + "\n" + "https://www.pixiv.net/artworks/" + imgInfo.Id + "\n[PICFLAG]"
+			msg += "pixiv:" + imgInfo.Id + " " + commandstr[3] + " " + imgInfo.Title + " 画师:" + imgInfo.UserName + "\n" + "https://www.pixiv.net/artworks/" + imgInfo.Id + "\n[PICFLAG]"
 			_, _ = utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
 			time.Sleep(time.Second * 3)
 		}

@@ -33,6 +33,17 @@ func HaoKangDe(command string) ([]byte, *model.PixivPicItem, error) {
 	return imgbyte, img, err
 }
 
+func RelateTag(tag, relateTag string) error {
+	if relateTag == "null" {
+		relateTag = ""
+	}
+	if err := setTagCache(tag, relateTag, 1); err != nil {
+		return err
+	}
+	SetPage(tag, 1)
+	return nil
+}
+
 func GetPixivImg(id string) ([]byte, error) {
 	_, err := os.Stat("./data/pixiv/" + id + "_big.jpg")
 	if err == nil {
@@ -95,7 +106,8 @@ func getRelatedPixivPic(id string) ([]*model.PixivPicItem, error) {
 	ret := make([]*model.PixivPicItem, 0)
 	if err := db.GetOrSet("pixiv:recommend"+id, &ret, func() (interface{}, error) {
 		b, err := utils.HttpGet("https://www.pixiv.net/ajax/illust/"+id+"/recommend/init?limit=18&lang=zh", map[string]string{
-			"Cookie": config.AppConfig.Pixiv.Cookie,
+			"Cookie":  config.AppConfig.Pixiv.Cookie,
+			"Referer": "https://www.pixiv.net/artworks/" + id,
 		}, proxy)
 		if err != nil {
 			return nil, err
@@ -222,7 +234,7 @@ func uniqueRand(data []*model.PixivPicItem) (*model.PixivPicItem, error) {
 	return ret, nil
 }
 
-var Hots = []string{"30000", "20000", "10000", "5000"}
+var Hots = []string{"30000", "20000", "10000", "5000", "1000", "500"}
 
 func tagurlencode(tag string, hot int) string {
 	return strings.ReplaceAll(url.QueryEscape(tag+" "+Hots[hot]+"users入り"), "+", "%20")
@@ -325,8 +337,8 @@ func getPicList(tag string, hot int, page int) func() (i interface{}, err error)
 			return "", err
 		}
 		//图片过少
-		if len(m.Body.Illust.Data) <= 10 {
-			if hot >= 3 {
+		if len(m.Body.Illust.Data) <= 0 {
+			if hot >= 5 {
 				if tag != relateTag {
 					return nil, errors.New("图片过少")
 				}

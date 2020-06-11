@@ -17,7 +17,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestHaoKangDe(t *testing.T) {
-	HaoKangDe("灼眼のシャナ")
+	HaoKangDe("邪神ちゃんドロップキック")
+}
+func TestNumber(t *testing.T) {
+	println(int32(340882274))
 }
 
 func TestResolve(t *testing.T) {
@@ -35,4 +38,8 @@ func TestResolve(t *testing.T) {
 	)
 	assert.Nil(t, err)
 	assert.NotNil(t, m2.Body.Urls)
+}
+
+func TestZaiLaiYiDian(t *testing.T) {
+	ZaiLaiYiDian("82085038")
 }

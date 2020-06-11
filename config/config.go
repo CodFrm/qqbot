@@ -18,6 +18,8 @@ type Config struct {
 	ModerateKey    string `yaml:"moderate-key"`
 	ManageGroup    []int  `yaml:"manage-group"`
 	ManageGroupMap map[int]struct{}
+	AdminQQ        []int64 `yaml:"admin-qq"`
+	AdminQQMap     map[int64]struct{}
 }
 
 type Pixiv struct {
@@ -47,6 +49,10 @@ func Init(filename string) error {
 	AppConfig.ManageGroupMap = make(map[int]struct{})
 	for _, v := range AppConfig.ManageGroup {
 		AppConfig.ManageGroupMap[v] = struct{}{}
+	}
+	AppConfig.AdminQQMap = make(map[int64]struct{})
+	for _, v := range AppConfig.AdminQQ {
+		AppConfig.AdminQQMap[v] = struct{}{}
 	}
 	return nil
 }
