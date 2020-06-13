@@ -90,7 +90,7 @@ func main() {
 					if resp.ContentLength > 1024*1024 {
 						continue
 					}
-					if ok, err := command.IsAdult(v); err != nil {
+					if ok, err := command.IsAdult(args.CurrentPacket.Data, v); err != nil {
 						if ok == 1 {
 							println(err)
 						} else if ok == 2 {
@@ -147,7 +147,7 @@ func main() {
 					utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
 				}
 			} else if strings.Index(content, "图片鉴") == 0 && (strings.Index(content, "黄") != -1 || strings.Index(content, "色") != -1) {
-				if ok, err := command.IsAdult(picinfo[0]); err != nil {
+				if ok, err := command.IsAdult(args.CurrentPacket.Data, picinfo[0]); err != nil {
 					if ok == 1 {
 						println(err)
 						utils.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "服务器开小差了,鉴图失败")
@@ -174,7 +174,7 @@ func main() {
 				hkd(args, "", ret)
 				return
 			}
-			if cmd := commandMatch(args.CurrentPacket.Data.Content, "^来(点|丶)(.*?)$"); len(cmd) > 0 {
+			if cmd := commandMatch(args.CurrentPacket.Data.Content, "^来(点|丶)(.*?)(图|$)$"); len(cmd) > 0 {
 				hkd(args, "", []string{
 					"", "", "", cmd[2],
 				})
@@ -192,7 +192,7 @@ func main() {
 				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUserID]; !ok {
 					return
 				}
-				if err := command.BlackList(cmd[1], cmd[2]); err != nil {
+				if err := command.BlackList(cmd[1], cmd[2], ""); err != nil {
 					sendErr(args, err)
 					return
 				}
@@ -260,16 +260,33 @@ func main() {
 					return
 				}
 				for _, v := range m.UserID {
-					command.BlackList(strconv.FormatInt(v, 10), cmd[2])
+					command.BlackList(strconv.FormatInt(v, 10), cmd[2], "")
 				}
 				sendErr(args, errors.New("OK"))
+			} else if cmd := commandMatch(args.CurrentPacket.Data.Content, "给我(康康|看看)"); len(cmd) > 0 {
+				cmd := commandMatch(args.CurrentPacket.Data.Content, "图片已撤回,证据已保留ID:(\\w+)")
+				if len(cmd) > 0 {
+					if b, err := command.Gwkk(cmd[1]); err != nil {
+						sendErr(args, err)
+						return
+					} else {
+						base64Str := base64.StdEncoding.EncodeToString(b)
+						if _, err := utils.SendFriendPicMsg(args.CurrentPacket.Data.FromUserID, "", base64Str); err != nil {
+							sendErr(args, err)
+							return
+						}
+						time.Sleep(time.Second)
+						sendErr(args, errors.New("已私聊发送"))
+					}
+				}
 			} else if strings.Index(args.CurrentPacket.Data.Content, "help") != -1 || strings.Index(args.CurrentPacket.Data.Content, "功能") != -1 ||
 				strings.Index(args.CurrentPacket.Data.Content, "帮助") != -1 || strings.Index(args.CurrentPacket.Data.Content, "菜单") != -1 {
 				utils.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, "1.来点好康的,触发指令:'来1份好康的,来点好看的,来点好看的风景图',享受生活的美好\n"+
 					"1.1.求原图,触发指令:'回复+求原图',可获得原图内容\n"+
 					"1.2.再来一点,触发指令:'回复+再来一/亿点',可获得更多好康的\n"+
 					"2.旋转图片,触发指令:'旋转图片 垂直/镜像/翻转/放大/缩小/灰白/颜色反转/高清重制 [图片]',更方便快捷的图片编辑\n"+
-					"3.图片鉴黄,触发指令:'图片鉴黄/色 [图片]',让我们来猎杀那些色批\n"+
+					"3.图片鉴黄,触发指令:'图片鉴黄/色 [图片]',让我们来猎杀那些色批(默认不会开启自动鉴黄功能)\n"+
+					"3.1给我康康,触发指令:'回复+给我康康/看看',成为专业鉴黄师\n"+
 					"4.清理潜水,触发指令:'踢潜水 人数 舔狗/面子/普通模式',更方便快捷的清人工具,需要有管理员权限\n"+
 					"还有更多神秘功能待你探索.")
 				return
@@ -336,6 +353,7 @@ func hkd(args model.Message, at string, commandstr []string) error {
 			if i >= 1 {
 				msg = ""
 			}
+			db.Redis.Set("pixiv:send:qq:"+imgInfo.Id, args.CurrentPacket.Data.FromUserID, time.Hour)
 			msg += "pixiv:" + imgInfo.Id + " " + commandstr[3] + " " + imgInfo.Title + " 画师:" + imgInfo.UserName + "\n" + "https://www.pixiv.net/artworks/" + imgInfo.Id + "\n[PICFLAG]"
 			_, _ = utils.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
 			time.Sleep(time.Second * 3)

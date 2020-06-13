@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/CodFrm/iotqq-plugins/config"
+	"github.com/CodFrm/iotqq-plugins/db"
 	"github.com/CodFrm/iotqq-plugins/model"
 	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/nfnt/resize"
@@ -19,6 +20,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -215,7 +217,18 @@ type moderate struct {
 	} `json:"predictions"`
 }
 
-func IsAdult(img *model.PicInfo) (int, error) {
+func Gwkk(id string) ([]byte, error) {
+	ok, err := db.Redis.SetNX("look:adult:"+id, "1", time.Hour*24*30).Result()
+	if err != nil {
+		return nil, errors.New("文件不存在")
+	}
+	if ok {
+		return ioutil.ReadFile("./data/adult/" + id + ".png")
+	}
+	return nil, errors.New("已经有人鉴定了")
+}
+
+func IsAdult(args model.Data, img *model.PicInfo) (int, error) {
 	//图片鉴黄
 	url := "https://api.moderatecontent.com/moderate/?key=" + config.AppConfig.ModerateKey
 	method := "POST"
@@ -257,8 +270,26 @@ func IsAdult(img *model.PicInfo) (int, error) {
 	}
 	if m.Predictions.Adult > 50 {
 		id := utils.RandStringRunes(32)
-		_ = ioutil.WriteFile("./data/adult/"+id+strconv.Itoa(int(m.Predictions.Adult))+".png", img.Byte, 0775)
+		db.Redis.Set("adult:pic:"+id, body, 0)
+		_ = ioutil.WriteFile("./data/adult/"+id+".png", img.Byte, 0775)
 		if m.Predictions.Adult > 70 {
+			user := strconv.FormatInt(args.FromUserID, 10)
+			if user == config.AppConfig.QQ {
+				reg := regexp.MustCompile("pixiv:(\\d+)")
+				m := reg.FindStringSubmatch(args.Content)
+				if len(m) > 0 {
+					if u := db.Redis.Get("pixiv:send:qq:" + m[1]).String(); u != "" {
+						user = u
+					}
+				}
+			}
+			key := "adult:ban:" + user
+			if len, _ := db.Redis.LPush(key, time.Now().Unix()).Result(); len == 1 {
+				db.Redis.Expire(key, time.Hour)
+			}
+			if t, _ := db.Redis.LIndex(key, 8).Int64(); time.Now().Unix()-t < 600 {
+				BanUser(args, user)
+			}
 			if m.Predictions.Adult > 90 {
 				return 3, errors.New("你的图片带有不宜内容,请注意你的言辞,图片已撤回,证据已保留ID:" + id)
 			}
@@ -267,4 +298,12 @@ func IsAdult(img *model.PicInfo) (int, error) {
 		return 4, errors.New("有点涩涩,保存了ID:" + id)
 	}
 	return 1, nil
+}
+
+func BanUser(args model.Data, user string) {
+	u, _ := strconv.ParseInt(user, 10, 64)
+	utils.SendMsg(args.FromGroupID, u, "加入黑名单")
+	time.Sleep(1 * time.Second)
+	utils.ShutUp(args.FromGroupID, u, 86400)
+	BlackList(user, "1", "86400")
 }
