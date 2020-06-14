@@ -278,7 +278,7 @@ func IsAdult(args model.Data, img *model.PicInfo) (int, error) {
 				reg := regexp.MustCompile("pixiv:(\\d+)")
 				m := reg.FindStringSubmatch(args.Content)
 				if len(m) > 0 {
-					if u := db.Redis.Get("pixiv:send:qq:" + m[1]).String(); u != "" {
+					if u := db.Redis.Get("pixiv:send:qq:" + m[1]).Val(); u != "" {
 						user = u
 					}
 				}

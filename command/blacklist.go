@@ -11,7 +11,7 @@ func BlackList(user, remove, t string) error {
 	d := time.Duration(0)
 	if t != "" {
 		tmp, _ := strconv.ParseInt(t, 10, 64)
-		d = time.Duration(tmp)
+		d = time.Duration(tmp) * time.Second
 	}
 	return db.Redis.Set("blacklist:"+user, remove, d).Err()
 }

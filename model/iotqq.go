@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/CodFrm/iotqq-plugins/config"
+	"github.com/CodFrm/iotqq-plugins/utils"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 )
 
 var url1, qq string
@@ -107,6 +109,21 @@ type Message struct {
 }
 type Channel struct {
 	Channel string `json:"channel"`
+}
+
+func (d *Message) IsAdmin() bool {
+	_, ok := config.AppConfig.AdminQQMap[d.CurrentPacket.Data.FromUserID]
+	return ok
+}
+
+func (d *Message) SendMessage(msg string, args ...interface{}) error {
+	_, err := utils.SendMsg(d.CurrentPacket.Data.FromGroupID, d.CurrentPacket.Data.FromUserID, msg)
+	return err
+}
+
+func (d *Message) CommandMatch(command string) []string {
+	reg := regexp.MustCompile(command)
+	return reg.FindStringSubmatch(d.CurrentPacket.Data.Content)
 }
 
 func (d *Data) SendPicByBase64(At int64, Content string, Base64 string) (string, error) {

@@ -17,7 +17,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestHaoKangDe(t *testing.T) {
-	HaoKangDe("邪神ちゃんドロップキック")
+	HaoKangDe("")
 }
 func TestNumber(t *testing.T) {
 	println(int32(340882274))

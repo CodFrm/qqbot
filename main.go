@@ -174,7 +174,7 @@ func main() {
 				hkd(args, "", ret)
 				return
 			}
-			if cmd := commandMatch(args.CurrentPacket.Data.Content, "^来(点|丶)(.*?)(图|$)$"); len(cmd) > 0 {
+			if cmd := commandMatch(args.CurrentPacket.Data.Content, "^来(点|丶|份)(.*?)(图|$)$"); len(cmd) > 0 {
 				hkd(args, "", []string{
 					"", "", "", cmd[2],
 				})
@@ -197,6 +197,13 @@ func main() {
 					return
 				}
 				sendErr(args, errors.New("OK"))
+			} else if cmd := args.CommandMatch("^清理缓存\\s?(.*?$|$)"); len(cmd) > 0 && args.IsAdmin() {
+				if err := command.CleanCache(cmd[1]); err != nil {
+					sendErr(args, err)
+					return
+				}
+				args.SendMessage("OK")
+				return
 			}
 			groupid := args.CurrentPacket.Data.FromGroupID
 			if lastContent[groupid] == args.CurrentPacket.Data.Content {

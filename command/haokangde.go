@@ -21,7 +21,7 @@ import (
 var PicIsNil = errors.New("我真的一张都没有了")
 
 func HaoKangDe(command string) ([]byte, *model.PixivPicItem, error) {
-	page, _ := db.Redis.Get("pixivlist" + command + ":page").Int()
+	page := GetPage(command)
 	if page <= 0 {
 		page = 1
 	}
@@ -37,7 +37,13 @@ func RelateTag(tag, relateTag string) error {
 	if relateTag == "null" {
 		relateTag = ""
 	}
-	if err := setTagCache(tag, relateTag, 1); err != nil {
+	ret := &struct {
+		db.StringCache
+		db.IntCache
+	}{}
+	ret.String = relateTag
+	ret.Int = 0
+	if err := db.Set("pixivTag"+tag, ret); err != nil {
 		return err
 	}
 	SetPage(tag, 1)
@@ -134,6 +140,10 @@ func getPixivPicByCommand(command string, page int) (*model.PixivPicItem, error)
 	var err error
 	if command == "" {
 		data, err = pixivRankList(page)
+		if len(data) <= 0 {
+			SetPage("", 1)
+			return getPixivPicByCommand(command, 1)
+		}
 	} else {
 		data, err = pixivList(command, page)
 	}
@@ -266,8 +276,59 @@ func setTagCache(tag, RelatedTag string, hot int) error {
 
 func pixivList(tag string, page int) ([]*model.PixivPicItem, error) {
 	picList := make([]*model.PixivPicItem, 0)
-	if err := db.GetOrSet("pixivList"+tag+":"+strconv.Itoa(page), &picList, getPicList(tag, 0, page), db.WithTTL(time.Second*86400)); err != nil {
-		return picList, err
+	relateTag, hot := getTagCache(tag)
+	if relateTag == "" {
+		relateTag = tag
+	}
+	if err := db.GetOrSet("pixivList"+relateTag+":"+strconv.Itoa(hot)+":"+strconv.Itoa(page), &picList, func() (interface{}, error) {
+		str, err := utils.HttpGet("https://www.pixiv.net/ajax/search/illustrations/"+tagurlencode(relateTag, hot)+
+			"?word="+tagurlencode(relateTag, hot)+"&order=date_d&mode=safe&p="+strconv.Itoa(page)+"&s_mode=s_tag&type=illust_and_ugoira&lang=zh",
+			map[string]string{
+				"Cookie":  config.AppConfig.Pixiv.Cookie,
+				"Referer": "https://www.pixiv.net/tags/" + tagurlencode(relateTag, hot) + "/illustrations?s_mode=s_tag",
+			}, proxy)
+		if err != nil {
+			return nil, err
+		}
+		m := &model.IllustRespond{}
+		if err := json.Unmarshal(str, m); err != nil {
+			return nil, err
+		}
+		return m.Body.Illust.Data, nil
+	}, db.WithTTL(time.Second*86400)); err != nil {
+		return nil, err
+	}
+	//图片过少
+	if len(picList) <= 0 {
+		time.Sleep(time.Second * 1)
+		if hot >= 5 {
+			if tag != relateTag {
+				return nil, errors.New("图片过少")
+			}
+			relateTags, _ := getRelateTags(tag)
+			if len(relateTags) == 0 {
+				return nil, errors.New("图片过少")
+			} else {
+				f := false
+				for _, v := range relateTags {
+					if v == relateTag {
+						continue
+					}
+					f = true
+					relateTag = v
+					break
+				}
+				if !f {
+					return nil, errors.New("图片过少")
+				}
+			}
+			setTagCache(tag, relateTag, 0)
+			SetPage(tag, 1)
+			return pixivList(tag, 1)
+		}
+		setTagCache(tag, relateTag, hot+1)
+		SetPage(tag, 1)
+		return pixivList(tag, 1)
 	}
 	return picList, nil
 }
@@ -300,76 +361,30 @@ func pixivRankList(page int) ([]*model.PixivPicItem, error) {
 		}
 		return ret, nil
 	}, db.WithTTL(time.Second*86400)); err != nil {
-		return picList, err
+		return nil, err
 	}
 	return picList, nil
 }
 
-func SetPage(tag string, page int) int {
+func GetPage(tag string) int {
+	page, _ := db.Redis.Get("pixivlist" + tag + ":page").Int()
+	if page <= 0 {
+		page = 1
+	}
 	end, _ := db.Redis.Get("pixivlist" + tag + ":page:expire").Int64()
 	if end > time.Now().Unix() && end > 0 {
 	} else {
 		page = 1
 		db.Redis.Set("pixivlist"+tag+":page:expire", time.Now().Unix()+86400*3, time.Second*86400*3)
+		db.Redis.Set("pixivlist"+tag+":page", page, time.Second*86400*3)
 	}
-	db.Redis.Set("pixivlist"+tag+":page", page, time.Second*86400*3)
 	return page
 }
 
-func getPicList(tag string, hot int, page int) func() (i interface{}, err error) {
-	return func() (i interface{}, err error) {
-		var relateTag string
-		relateTag, hot = getTagCache(tag)
-		if relateTag == "" {
-			relateTag = tag
-		}
-		str, err := utils.HttpGet("https://www.pixiv.net/ajax/search/illustrations/"+tagurlencode(relateTag, hot)+
-			"?word="+tagurlencode(relateTag, hot)+"&order=date_d&mode=safe&p="+strconv.Itoa(page)+"&s_mode=s_tag&type=illust_and_ugoira&lang=zh",
-			map[string]string{
-				"Cookie":  config.AppConfig.Pixiv.Cookie,
-				"Referer": "https://www.pixiv.net/tags/" + tagurlencode(relateTag, hot) + "/illustrations?s_mode=s_tag",
-			}, proxy)
-		if err != nil {
-			return "", err
-		}
-		m := &model.IllustRespond{}
-		if err := json.Unmarshal(str, m); err != nil {
-			return "", err
-		}
-		//图片过少
-		if len(m.Body.Illust.Data) <= 0 {
-			if hot >= 5 {
-				if tag != relateTag {
-					return nil, errors.New("图片过少")
-				}
-				relateTags, _ := getRelateTags(tag)
-				if len(relateTags) == 0 {
-					return nil, errors.New("图片过少")
-				} else {
-					f := false
-					for _, v := range relateTags {
-						if v == relateTag {
-							continue
-						}
-						f = true
-						relateTag = v
-						break
-					}
-					if !f {
-						return nil, errors.New("图片过少")
-					}
-				}
-				setTagCache(tag, relateTag, 0)
-				SetPage(tag, 1)
-				return getPicList(tag, 0, 1)()
-			}
-			time.Sleep(time.Second * 1)
-			setTagCache(tag, relateTag, hot+1)
-			SetPage(tag, 1)
-			return getPicList(tag, hot+1, 1)()
-		}
-		return m.Body.Illust.Data, nil
-	}
+func SetPage(tag string, page int) int {
+	db.Redis.Set("pixivlist"+tag+":page:expire", time.Now().Unix()+86400*3, time.Second*86400*3)
+	db.Redis.Set("pixivlist"+tag+":page", page, time.Second*86400*3)
+	return page
 }
 
 func getRelateTags(tag string) ([]string, error) {
