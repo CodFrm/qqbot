@@ -12,6 +12,7 @@ type Config struct {
 	Port           int
 	Url            string
 	Pixiv          Pixiv
+	MySQL          MySQL
 	Ssr            string
 	Redis          Redis
 	Hdkey          string
@@ -20,6 +21,10 @@ type Config struct {
 	ManageGroupMap map[int]struct{}
 	AdminQQ        []int64 `yaml:"admin-qq"`
 	AdminQQMap     map[int64]struct{}
+}
+
+type MySQL struct {
+	Dsn string
 }
 
 type Pixiv struct {

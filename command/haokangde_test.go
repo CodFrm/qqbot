@@ -10,7 +10,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	config.Init("../config.yaml")
+	config.Init("./config.yaml")
 	db.Init()
 	Init()
 	m.Run()

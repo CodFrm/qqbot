@@ -20,6 +20,7 @@ func Init() error {
 	proxy = func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
 		return dia.Dial(network, addr)
 	}
+	scenes = db.NewScenes()
 	return nil
 }
 

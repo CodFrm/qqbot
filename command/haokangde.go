@@ -223,12 +223,14 @@ func isR18(p *model.PixivIllust) bool {
 	for _, v := range p.Body.Tags.Tags {
 		if v.Tag == "R-18" {
 			return true
+		} else if v.Tag == "R18" {
+			return true
 		}
 	}
 	return false
 }
 
-//30天内不再重复
+//5天内不再重复
 func uniqueRand(data []*model.PixivPicItem) (*model.PixivPicItem, error) {
 	randList := make([]*model.PixivPicItem, 0)
 	for _, v := range data {
@@ -240,7 +242,7 @@ func uniqueRand(data []*model.PixivPicItem) (*model.PixivPicItem, error) {
 		return nil, PicIsNil
 	}
 	ret := randList[rand.Intn(len(randList))]
-	db.Redis.Set("uniqueRand:"+ret.Id, "1", time.Second*86400*30)
+	db.Redis.Set("uniqueRand:"+ret.Id, "1", time.Second*86400*5)
 	return ret, nil
 }
 
@@ -295,7 +297,7 @@ func pixivList(tag string, page int) ([]*model.PixivPicItem, error) {
 			return nil, err
 		}
 		return m.Body.Illust.Data, nil
-	}, db.WithTTL(time.Second*86400)); err != nil {
+	}, db.WithTTL(time.Second*86400*3)); err != nil {
 		return nil, err
 	}
 	//图片过少
@@ -360,7 +362,7 @@ func pixivRankList(page int) ([]*model.PixivPicItem, error) {
 			})
 		}
 		return ret, nil
-	}, db.WithTTL(time.Second*86400)); err != nil {
+	}, db.WithTTL(time.Second*86400*3)); err != nil {
 		return nil, err
 	}
 	return picList, nil
@@ -375,15 +377,19 @@ func GetPage(tag string) int {
 	if end > time.Now().Unix() && end > 0 {
 	} else {
 		page = 1
-		db.Redis.Set("pixivlist"+tag+":page:expire", time.Now().Unix()+86400*3, time.Second*86400*3)
-		db.Redis.Set("pixivlist"+tag+":page", page, time.Second*86400*3)
+		db.Redis.Set("pixivlist"+tag+":page:expire", time.Now().Unix()+86400*7, time.Second*86400*8)
+		db.Redis.Set("pixivlist"+tag+":page", page, time.Second*86400*7)
 	}
 	return page
 }
 
 func SetPage(tag string, page int) int {
-	db.Redis.Set("pixivlist"+tag+":page:expire", time.Now().Unix()+86400*3, time.Second*86400*3)
-	db.Redis.Set("pixivlist"+tag+":page", page, time.Second*86400*3)
+	end, _ := db.Redis.Get("pixivlist" + tag + ":page:expire").Int64()
+	if end > time.Now().Unix() && end > 0 {
+	} else {
+		db.Redis.Set("pixivlist"+tag+":page:expire", time.Now().Unix()+86400*7, time.Second*86400*8)
+	}
+	db.Redis.Set("pixivlist"+tag+":page", page, time.Second*86400*7)
 	return page
 }
 

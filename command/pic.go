@@ -9,6 +9,7 @@ import (
 	"github.com/CodFrm/iotqq-plugins/db"
 	"github.com/CodFrm/iotqq-plugins/model"
 	"github.com/CodFrm/iotqq-plugins/utils"
+	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"github.com/nfnt/resize"
 	"image"
 	"image/color"
@@ -228,7 +229,7 @@ func Gwkk(id string) ([]byte, error) {
 	return nil, errors.New("已经有人鉴定了")
 }
 
-func IsAdult(args model.Data, img *model.PicInfo) (int, error) {
+func IsAdult(args iotqq.Data, img *model.PicInfo) (int, error) {
 	//图片鉴黄
 	url := "https://api.moderatecontent.com/moderate/?key=" + config.AppConfig.ModerateKey
 	method := "POST"
@@ -300,10 +301,10 @@ func IsAdult(args model.Data, img *model.PicInfo) (int, error) {
 	return 1, nil
 }
 
-func BanUser(args model.Data, user string) {
+func BanUser(args iotqq.Data, user string) {
 	u, _ := strconv.ParseInt(user, 10, 64)
-	utils.SendMsg(args.FromGroupID, u, "加入黑名单")
+	iotqq.SendMsg(args.FromGroupID, u, "加入黑名单")
 	time.Sleep(1 * time.Second)
-	utils.ShutUp(args.FromGroupID, u, 86400)
+	iotqq.ShutUp(args.FromGroupID, u, 86400)
 	BlackList(user, "1", "86400")
 }
