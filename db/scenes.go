@@ -43,3 +43,14 @@ func (s *Scenes) QueryScenesTagByScenesId(scenes_id int64) ([]*model.ScenesTag, 
 	}
 	return ret, nil
 }
+
+func (s *Scenes) FindScenesTag(id int64, key string) (*model.ScenesTag, error) {
+	ret := &model.ScenesTag{}
+	if err := Db.Where("scenes_id=? and key=?", id, key).First(ret).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err); err != nil {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return ret, nil
+}

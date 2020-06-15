@@ -368,11 +368,11 @@ func GetGroupList() ([]*GroupInfo, error) {
 		if err := json.Unmarshal(body, &s); err != nil {
 			return nil, err
 		}
+		token = s.NextToken
+		ret = append(ret, s.TroopList...)
 		if s.NextToken == "" {
 			break
 		}
-		token = s.NextToken
-		ret = append(ret, s.TroopList...)
 	}
 	return ret, nil
 }
@@ -398,11 +398,11 @@ func GetGroupUserList(group int) ([]*GroupMemberInfo, error) {
 		if err := json.Unmarshal(body, &s); err != nil {
 			return nil, err
 		}
+		LastUin = s.LastUin
+		ret = append(ret, s.MemberList...)
 		if s.LastUin == 0 {
 			break
 		}
-		LastUin = s.LastUin
-		ret = append(ret, s.MemberList...)
 	}
 	return ret, nil
 }

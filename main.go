@@ -291,8 +291,10 @@ func main() {
 					return
 				}
 				if err := command.CreateScenes(cmd[1], 1); err != nil {
-					sendErr(args, err)
-					return
+					if err.Error() != "场景存在" {
+						sendErr(args, err)
+						return
+					}
 				}
 				if err := command.AddScenesMap(cmd[1], cmd[2], cmd[3]); err != nil {
 					sendErr(args, err)
@@ -448,7 +450,7 @@ func hkd(args iotqq.Message, at string, commandstr []string) error {
 	args.SendMessage(" 图片搜索中...请稍后")
 	go func() {
 		mapTag, err := command.QueryMap(args.CurrentPacket.Data.FromGroupID, commandstr[3])
-		if err != nil {
+		if err != nil || mapTag == "" {
 			mapTag = commandstr[3]
 		}
 		for i := 0; i < num; i++ {

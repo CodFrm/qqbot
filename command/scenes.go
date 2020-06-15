@@ -125,11 +125,20 @@ func AddScenesMap(scenes_name string, key string, value string) error {
 	if m.Stat == 0 {
 		return errors.New("场景已被移除")
 	}
-	if err := db.Db.Save(&model.ScenesTag{
-		ScenesId: m.ID,
-		Key:      key,
-		Value:    value,
-	}).Error; err != nil {
+	t, err := scenes.FindScenesTag(m.ID, key)
+	if err != nil {
+		return err
+	}
+	if t != nil {
+		t.Value = value
+	} else {
+		t = &model.ScenesTag{
+			ScenesId: m.ID,
+			Key:      key,
+			Value:    value,
+		}
+	}
+	if err := db.Db.Save(t).Error; err != nil {
 		return err
 	}
 	db.Redis.Del("scenes:tag:" + scenes_name)

@@ -7,16 +7,3 @@ CREATE TABLE `scenes`
     UNIQUE KEY `name` (`name`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
-
-CREATE TABLE `scenes_tag`
-(
-    `id`        int                                                           NOT NULL AUTO_INCREMENT,
-    `scenes_id` int                                                           NOT NULL,
-    `key`       varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '原tag',
-    `value`     varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '映射tag',
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `scenes_key` (`scenes_id`, `key`),
-    KEY `scenes_id` (`scenes_id`),
-    KEY `key` (`key`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8;
