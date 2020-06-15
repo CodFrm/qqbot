@@ -246,6 +246,10 @@ func main() {
 				args.SendMessage(content, args.NotAt())
 				return
 			} else if cmd, ok := args.CommandMatch("^(添加|移除)场景 (.+?)$"); ok {
+				if ok, _ := iotqq.IsAdmin(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID); !ok {
+					args.SendMessage("你没有权限")
+					return
+				}
 				s := strings.Split(cmd[2], ",")
 				if cmd[1] == "添加" {
 					if err := command.AddScenes(args.CurrentPacket.Data.FromGroupID, s); err != nil {

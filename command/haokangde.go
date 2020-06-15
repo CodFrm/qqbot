@@ -21,6 +21,9 @@ import (
 var PicIsNil = errors.New("我真的一张都没有了")
 
 func HaoKangDe(command string) ([]byte, *model.PixivPicItem, error) {
+	if command == "remove" {
+		return nil, nil, errors.New("图片过少")
+	}
 	page := GetPage(command)
 	if page <= 0 {
 		page = 1
