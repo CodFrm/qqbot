@@ -4,16 +4,40 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/CodFrm/iotqq-plugins/db"
+	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"github.com/go-redis/redis/v7"
 	"github.com/pkumza/numcn"
+	"github.com/robfig/cron/v3"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
 )
 
-var rewardsMap = map[string]func(group int, qq int64, rewards bool, continuous int, args ...string){
-	"设置名片": rewardGroupName,
+var RewardsMap = map[string]func(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string){
+	"设置名片": rewardGroupName, "nmsl": rewardNmsl,
+	"nmsl单词特供版": rewardNmsl2,
+}
+
+var nmslEnglish []string
+
+func SignInit() {
+	c := cron.New(cron.WithSeconds())
+	c.AddFunc("1 0 * * *", everyDay)
+	c.Start()
+	nmslEnglish = strings.Split(`你妈逼你今天学习了吗？废物
+连一个单词都背不下来，天天躺着做你妈春秋大梦呢？
+我家狗都会说英文，你竟然不会？
+牌牌琦都会上Youtube打出来Chinese Kongfu Yao，而你28个英文字符都拼不全。
+单词都不背，天天活你妈的有个屁意思。
+你说只要你努力，全世界都会为你让步，其实你狗屁不是，10个单词都背不下来。
+现在的大学生真的不行，几十个单词都背不下来还天天嘲讽我们大专生。
+当年我认识的一个喜欢吃骨灰拌饭的妹妹都能一天背十个单词，再看看你这个废物？
+老子拿脚踩一脚四级卷子考出来的都比你分高，你也能挺个逼脸不背单词？
+你说你女神喜欢洋人是婊子，其实你不知道她跟外国人处对象是为了学英文，而你只会说卧槽。
+你笑印度人说英文有股咖喱味，印度人笑你连用英语说咖喱都不会说。
+你笑特朗普是傻逼，却不知道人家说着你这辈子都学不会的语言。你也配说他？`, "\n")
 }
 
 func Sign(qqgroup int, qq int64) error {
@@ -38,13 +62,31 @@ func Sign(qqgroup int, qq int64) error {
 		db.Redis.HSet("sign:record:"+strconv.Itoa(qqgroup), qq, 1)
 	}
 	db.Redis.Expire(key, time.Hour*72)
-	go execRewards(qqgroup, qq, true, continuous)
+	go execRewards(qqgroup, qq, true, time.Now(), continuous)
+	db.Redis.HSet("sign:group:record:"+time.Now().Format("2006:01:02"), strconv.Itoa(qqgroup), "1")
+	db.Redis.HSet("sign:end:record:"+strconv.Itoa(qqgroup), qq, time.Now().Format("2006:01:02"))
 	return nil
 }
 
 type Reward struct {
 	Command string   `json:"command"`
 	Args    []string `json:"args"`
+}
+
+func everyDay() {
+	day := time.Now().Add(-time.Hour).Format("2006:01:02")
+	key := "sign:group:record:" + day
+	list := db.Redis.HGetAll(key).Val()
+	for group := range list {
+		qqs := db.Redis.HGetAll("sign:end:record:" + group).Val()
+		for qq, val := range qqs {
+			if val != day && val != time.Now().Format("2006:01:02") {
+				//惩罚
+				t, _ := time.Parse(val, "2006:01:02")
+				go execRewards(utils.StringToInt(group), utils.StringToInt64(qq), false, t, 0)
+			}
+		}
+	}
 }
 
 func SetRewards(qqgroup int, qq int64, rm bool, command string, args ...string) error {
@@ -70,7 +112,7 @@ func SetRewards(qqgroup int, qq int64, rm bool, command string, args ...string) 
 			break
 		}
 	}
-	if _, ok := rewardsMap[command]; !ok {
+	if _, ok := RewardsMap[command]; !ok {
 		return errors.New("不存在的奖惩方案")
 	}
 	if !flag && rm == false {
@@ -103,25 +145,45 @@ func GetRewards(qqgroup int, qq int64) ([]*Reward, error) {
 	return rs, nil
 }
 
-func execRewards(qqgroup int, qq int64, rewards bool, continuous int) {
+func execRewards(qqgroup int, qq int64, rewards bool, day time.Time, continuous int) {
 	list, _ := GetRewards(qqgroup, qq)
 	for _, v := range list {
-		f := rewardsMap[v.Command]
+		f := RewardsMap[v.Command]
 		if f != nil {
-			f(qqgroup, qq, rewards, continuous, v.Args...)
+			f(qqgroup, qq, rewards, day, continuous, v.Args...)
 		}
 	}
 }
 
-func rewardGroupName(group int, qq int64, rewards bool, continuous int, args ...string) {
+func rewardGroupName(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
 	if len(args) < 1 {
+		return
+	}
+	if continuous < 1 {
+		continuous = 1
+	}
+	if !rewards {
 		return
 	}
 	s := strings.Join(args, " ")
 	s = strings.Replace(s, "N", numcn.EncodeFromInt64(int64(continuous)), 1)
 	iotqq.ModifyGroupCard(group, qq, s)
-	if rewards {
-		time.Sleep(time.Second * 2)
-		iotqq.SendMsg(group, qq, "奖励你新id:"+s)
+	time.Sleep(time.Second * 2)
+	iotqq.SendMsg(group, qq, "奖励你新id:"+s)
+}
+
+func rewardNmsl(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
+	if continuous > 0 || rewards {
+		return
 	}
+	iotqq.SendMsg(group, qq, utils.Nmsl())
+}
+
+//英语特供版
+func rewardNmsl2(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
+	if continuous > 0 || rewards {
+		return
+	}
+	time.Sleep(time.Second * time.Duration(rand.Intn(10)))
+	iotqq.SendMsg(group, qq, nmslEnglish[rand.Intn(len(nmslEnglish))])
 }

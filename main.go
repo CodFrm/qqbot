@@ -421,6 +421,9 @@ func main() {
 						sendErr(args, errors.New("已私聊发送"))
 					}
 				}
+			} else if strings.Index(args.CurrentPacket.Data.Content, "nmsl") != -1 {
+				args.SendMessage(" " + utils.Nmsl())
+				return
 			} else if (strings.Index(args.CurrentPacket.Data.Content, "help") != -1 || strings.Index(args.CurrentPacket.Data.Content, "功能") != -1 ||
 				strings.Index(args.CurrentPacket.Data.Content, "帮助") != -1 || strings.Index(args.CurrentPacket.Data.Content, "菜单") != -1) && args.CurrentPacket.Data.FromUserID != args.CurrentQQ {
 				if strings.Index(args.CurrentPacket.Data.Content, "帮助 图片场景") != -1 {
@@ -437,7 +440,7 @@ func main() {
 						"5.1.打卡,触发指令:'打卡',完成今天的任务\n" +
 						"5.2.添加/删除奖惩,触发指令:'添加/删除奖惩 [奖惩方案] [参数]',打卡成功或者失败后将进行奖惩,让行动更有动力\n" +
 						"5.3.查看奖惩,触发指令:'查看奖惩',查看我选择的奖惩方案\n" +
-						"奖惩方案:1.设置名片 打卡成功后帮你修改群内名片(陆续开发中)\n" +
+						"奖惩方案:1.设置名片 打卡成功后帮你修改群内名片,2.nmsl,3.nmsl单词特供版(陆续开发中)\n" +
 						"eg.添加奖惩 设置名片 打卡第N天")
 					return
 				}

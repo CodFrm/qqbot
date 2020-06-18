@@ -21,6 +21,7 @@ func Init() error {
 		return dia.Dial(network, addr)
 	}
 	scenes = db.NewScenes()
+	SignInit()
 	return nil
 }
 

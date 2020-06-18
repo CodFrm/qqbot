@@ -13,6 +13,7 @@ require (
 	github.com/nadoo/glider v0.9.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pkumza/numcn v1.0.0
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.6.0
 	gopkg.in/yaml.v2 v2.3.0
 )

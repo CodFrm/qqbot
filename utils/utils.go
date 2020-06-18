@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -119,5 +120,27 @@ func RandStringRunes(n int) string {
 
 func StringToInt(i string) int {
 	ret, _ := strconv.Atoi(i)
+	return ret
+}
+
+func StringToInt64(i string) int64 {
+	ret, _ := strconv.ParseInt(i, 10, 64)
+	return ret
+}
+
+func Nmsl() string {
+	f := rand.Intn(2)
+	var err error
+	var resp []byte
+	if f == 1 {
+		resp, err = HttpGet("https://nmsl.shadiao.app/api.php?level=min&lang=zh_cn", nil, nil)
+	} else {
+		resp, err = HttpGet("https://nmsl.shadiao.app/api.php?lang=zh_cn", nil, nil)
+	}
+	if err != nil {
+		return "骂不出来了,劳资举报一手"
+	}
+	ret := string(resp)
+	ret = strings.ReplaceAll(ret, "妈", "🐴")
 	return ret
 }
