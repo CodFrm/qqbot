@@ -309,22 +309,40 @@ func main() {
 				args.SendMessage("OK")
 				return
 			} else if _, ok := args.CommandMatch("^打卡$"); ok {
-				if err := command.Sign(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID); err != nil {
+				if str, err := command.Sign(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID); err != nil {
 					sendErr(args, err)
 				} else {
-					args.SendMessage("OK")
+					args.SendMessage(str)
 				}
 				return
 			} else if cmd, ok := args.CommandMatch("^(添加|删除)奖惩 (.+?)( (.*?)|)$"); ok {
 				reargs := strings.Split(cmd[4], " ")
-				if err := command.SetRewards(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, cmd[1] == "删除", cmd[2], reargs...); err != nil {
+				if err := command.SetRewards(strconv.Itoa(args.CurrentPacket.Data.FromGroupID), args.CurrentPacket.Data.FromUserID, cmd[1] == "删除", cmd[2], reargs...); err != nil {
 					sendErr(args, err)
 				} else {
 					args.SendMessage("OK")
 				}
 				return
-			} else if _, ok := args.CommandMatch("^查看奖惩$"); ok {
-				val, err := command.GetRewards(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID)
+			} else if cmd, ok := args.CommandMatch("^添加全群奖惩 (.+?)( (.*?)|)$"); ok {
+				if ok, err := iotqq.IsAdmin(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID); err != nil {
+					sendErr(args, err)
+					return
+				} else if !ok {
+					args.SendMessage("你没有权限")
+					return
+				}
+				reargs := strings.Split(cmd[3], " ")
+				if err := command.AdminGroupReward(strconv.Itoa(args.CurrentPacket.Data.FromGroupID), false, cmd[1], reargs...); err != nil {
+					sendErr(args, err)
+					return
+				}
+				args.SendMessage("OK")
+				return
+			} else if cmd, ok := args.CommandMatch("^查看奖惩(| (.*?))$"); ok {
+				if cmd[2] == "" {
+					cmd[2] = strconv.Itoa(args.CurrentPacket.Data.FromGroupID)
+				}
+				val, err := command.GetRewards(cmd[2], args.CurrentPacket.Data.FromUserID)
 				if err != nil {
 					sendErr(args, err)
 				} else {

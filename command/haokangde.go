@@ -63,9 +63,12 @@ func RelateTag(tag, relateTag string) error {
 }
 
 func GetPixivImg(id string) ([]byte, error) {
+	if !db.Redis.SetNX("pixiv:big:send"+id, "1", time.Hour).Val() {
+		return nil, errors.New("已经发送过了啦")
+	}
 	_, err := os.Stat("./data/pixiv/" + id + "_big.jpg")
 	if err == nil {
-		return nil, errors.New("已经发送过了啦")
+		return ioutil.ReadFile("./data/pixiv/" + id + "_big.jpg")
 	}
 	b, err := ioutil.ReadFile("./data/pixiv/" + id + ".json")
 	if err != nil {
