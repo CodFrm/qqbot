@@ -36,6 +36,15 @@ func HaoKangDe(command string) ([]byte, *model.PixivPicItem, error) {
 	return imgbyte, img, err
 }
 
+func BanR18(command string) error {
+	n := db.Redis.Incr("pixiv:tag:r18:" + command).Val()
+	if n > 5 {
+		AddScenesMap("BanR18", command, "remove")
+	}
+	db.Redis.Expire("pixiv:tag:r18:"+command, time.Minute*5)
+	return nil
+}
+
 func RelateTag(tag, relateTag string) error {
 	if relateTag == "null" {
 		relateTag = ""

@@ -229,7 +229,7 @@ func Gwkk(id string) ([]byte, error) {
 	return nil, errors.New("已经有人鉴定了")
 }
 
-func IsAdult(args iotqq.Data, img *model.PicInfo) (int, error) {
+func IsAdult(args iotqq.Data, img *model.PicInfo) (int, bool, error) {
 	//图片鉴黄
 	url := "https://api.moderatecontent.com/moderate/?key=" + config.AppConfig.ModerateKey
 	method := "POST"
@@ -240,11 +240,11 @@ func IsAdult(args iotqq.Data, img *model.PicInfo) (int, error) {
 	r := bytes.NewBuffer(img.Byte)
 	_, errFile1 = io.Copy(part1, r)
 	if errFile1 != nil {
-		return 1, errFile1
+		return 1, false, errFile1
 	}
 	err := writer.Close()
 	if err != nil {
-		return 1, err
+		return 1, false, err
 	}
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -255,25 +255,25 @@ func IsAdult(args iotqq.Data, img *model.PicInfo) (int, error) {
 	req, err := http.NewRequest(method, url, payload)
 	if err != nil {
 		println(err.Error())
-		return 1, nil
+		return 1, false, nil
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	res, err := client.Do(req)
 	if err != nil {
 		println(err.Error())
-		return 1, nil
+		return 1, false, nil
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	m := &moderate{}
 	if err := json.Unmarshal(body, m); err != nil {
-		return 1, err
+		return 1, false, err
 	}
 	if m.Predictions.Adult > 50 {
 		id := utils.RandStringRunes(32)
 		db.Redis.Set("adult:pic:"+id, body, 0)
 		_ = ioutil.WriteFile("./data/adult/"+id+".png", img.Byte, 0775)
-		if m.Predictions.Adult > 70 {
+		if m.Predictions.Adult > 60 {
 			user := strconv.FormatInt(args.FromUserID, 10)
 			if user == config.AppConfig.QQ {
 				reg := regexp.MustCompile("pixiv:(\\d+)")
@@ -288,17 +288,19 @@ func IsAdult(args iotqq.Data, img *model.PicInfo) (int, error) {
 			if len, _ := db.Redis.LPush(key, time.Now().Unix()).Result(); len == 1 {
 				db.Redis.Expire(key, time.Hour)
 			}
-			if t, _ := db.Redis.LIndex(key, 8).Int64(); time.Now().Unix()-t < 600 {
+			flag := false
+			if t, _ := db.Redis.LIndex(key, 4).Int64(); time.Now().Unix()-t < 600 {
 				BanUser(args, user)
+				flag = true
 			}
 			if m.Predictions.Adult > 90 {
-				return 3, errors.New("你的图片带有不宜内容,请注意你的言辞,图片已撤回,证据已保留ID:" + id)
+				return 3, flag, errors.New("你的图片带有不宜内容,请注意你的言辞,图片已撤回,证据已保留ID:" + id)
 			}
-			return 2, errors.New("你的图片可能带有不宜内容,请注意你的言辞,证据已保留ID:" + id)
+			return 2, flag, errors.New("你的图片可能带有不宜内容,请注意你的言辞,证据已保留ID:" + id)
 		}
-		return 4, errors.New("有点涩涩,保存了ID:" + id)
+		return 4, false, errors.New("有点涩涩,保存了ID:" + id)
 	}
-	return 1, nil
+	return 1, false, nil
 }
 
 func BanUser(args iotqq.Data, user string) {

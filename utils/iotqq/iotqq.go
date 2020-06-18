@@ -447,3 +447,18 @@ func IsAdmin(group int, user int64) (bool, error) {
 	}
 	return false, nil
 }
+
+func ModifyGroupCard(qqgroup int, UserID int64, NewNick string) (string, error) {
+	tmp := make(map[string]interface{})
+	tmp["GroupID"] = qqgroup
+	tmp["UserID"] = UserID
+	tmp["NewNick"] = NewNick
+	tmp1, _ := json.Marshal(tmp)
+	resp, err := (http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=ModifyGroupCard&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1)))
+	if err != nil {
+		return "", nil
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	return string(body), nil
+}

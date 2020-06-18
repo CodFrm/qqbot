@@ -80,7 +80,7 @@ func main() {
 			if len(picinfo) == 0 {
 				return
 			}
-			if _, ok := config.AppConfig.ManageGroupMap[args.CurrentPacket.Data.FromGroupID]; ok {
+			if _, ok := config.AppConfig.ManageGroupMap[args.CurrentPacket.Data.FromGroupID]; ok && args.CurrentPacket.Data.FromUserID != args.CurrentQQ {
 				for _, v := range picinfo {
 					resp, err := http.Get(v.Url)
 					if err != nil {
@@ -91,14 +91,16 @@ func main() {
 					if resp.ContentLength > 1024*1024 {
 						continue
 					}
-					if ok, err := command.IsAdult(args.CurrentPacket.Data, v); err != nil {
+					if ok, _, err := command.IsAdult(args.CurrentPacket.Data, v); err != nil {
 						if ok == 1 {
 							println(err)
 						} else if ok == 2 {
 							iotqq.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, err.Error())
+							return
 						} else if ok == 3 {
 							iotqq.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, err.Error())
 							iotqq.RevokeMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.MsgSeq, args.CurrentPacket.Data.MsgRandom)
+							return
 						}
 					}
 				}
@@ -148,7 +150,7 @@ func main() {
 					iotqq.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
 				}
 			} else if strings.Index(content, "图片鉴") == 0 && (strings.Index(content, "黄") != -1 || strings.Index(content, "色") != -1) {
-				if ok, err := command.IsAdult(args.CurrentPacket.Data, picinfo[0]); err != nil {
+				if ok, _, err := command.IsAdult(args.CurrentPacket.Data, picinfo[0]); err != nil {
 					if ok == 1 {
 						println(err)
 						iotqq.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "服务器开小差了,鉴图失败")
@@ -306,6 +308,37 @@ func main() {
 				}
 				args.SendMessage("OK")
 				return
+			} else if _, ok := args.CommandMatch("^打卡$"); ok {
+				if err := command.Sign(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID); err != nil {
+					sendErr(args, err)
+				} else {
+					args.SendMessage("OK")
+				}
+				return
+			} else if cmd, ok := args.CommandMatch("^(添加|删除)奖惩 (.+?)( (.*?)|)$"); ok {
+				reargs := strings.Split(cmd[4], " ")
+				if err := command.SetRewards(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, cmd[1] == "删除", cmd[2], reargs...); err != nil {
+					sendErr(args, err)
+				} else {
+					args.SendMessage("OK")
+				}
+				return
+			} else if _, ok := args.CommandMatch("^查看奖惩$"); ok {
+				val, err := command.GetRewards(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID)
+				if err != nil {
+					sendErr(args, err)
+				} else {
+					s := make([]string, 0)
+					for _, v := range val {
+						s = append(s, v.Command)
+					}
+					if len(s) <= 0 {
+						args.SendMessage("你没有设置奖惩")
+					} else {
+						args.SendMessage(strings.Join(s, ","))
+					}
+				}
+				return
 			}
 			groupid := args.CurrentPacket.Data.FromGroupID
 			if lastContent[groupid] == args.CurrentPacket.Data.Content {
@@ -388,8 +421,8 @@ func main() {
 						sendErr(args, errors.New("已私聊发送"))
 					}
 				}
-			} else if strings.Index(args.CurrentPacket.Data.Content, "help") != -1 || strings.Index(args.CurrentPacket.Data.Content, "功能") != -1 ||
-				strings.Index(args.CurrentPacket.Data.Content, "帮助") != -1 || strings.Index(args.CurrentPacket.Data.Content, "菜单") != -1 {
+			} else if (strings.Index(args.CurrentPacket.Data.Content, "help") != -1 || strings.Index(args.CurrentPacket.Data.Content, "功能") != -1 ||
+				strings.Index(args.CurrentPacket.Data.Content, "帮助") != -1 || strings.Index(args.CurrentPacket.Data.Content, "菜单") != -1) && args.CurrentPacket.Data.FromUserID != args.CurrentQQ {
 				if strings.Index(args.CurrentPacket.Data.Content, "帮助 图片场景") != -1 {
 					args.SendMessage("可设置当前群的场景内容,将tag映射到另外一个tag实现更加有趣的图片搜索\n" +
 						"1.3.1.当前场景,触发指令:'当前/本群场景',查询本群场景\n" +
@@ -398,6 +431,14 @@ func main() {
 						"1.3.4.查看场景,触发指令:'查看场景 [场景名]',查看场景中tag的映射表\n" +
 						"1.3.5.映射tag,触发指令:'映射tag [映射tag] [被映射tag]'*,自定义群内tag映射表(暂未开放)\n" +
 						"1.3.6.场景映射,触发指令:'场景映射 [场景名] [映射tag] [被映射tag]'*,需要高级权限")
+					return
+				} else if strings.Index(args.CurrentPacket.Data.Content, "帮助 每日打卡") != -1 {
+					args.SendMessage("帮助你坚持完成一件事情\n" +
+						"5.1.打卡,触发指令:'打卡',完成今天的任务\n" +
+						"5.2.添加/删除奖惩,触发指令:'添加/删除奖惩 [奖惩方案] [参数]',打卡成功或者失败后将进行奖惩,让行动更有动力\n" +
+						"5.3.查看奖惩,触发指令:'查看奖惩',查看我选择的奖惩方案\n" +
+						"奖惩方案:1.设置名片 打卡成功后帮你修改群内名片(陆续开发中)\n" +
+						"eg.添加奖惩 设置名片 打卡第N天")
 					return
 				}
 				iotqq.SendMsg(args.CurrentPacket.Data.FromGroupID, 0, "1.来点好康的,触发指令:'来1份好康的,来点好看的,来点好看的风景图',享受生活的美好\n"+
@@ -409,6 +450,7 @@ func main() {
 					"3.图片鉴黄,触发指令:'图片鉴黄/色 [图片]',让我们来猎杀那些色批(默认不会开启自动鉴黄功能)\n"+
 					"3.1给我康康,触发指令:'回复+给我康康/看看',成为专业鉴黄师\n"+
 					"4.清理潜水,触发指令:'踢潜水 人数 舔狗/面子/普通模式'*,更方便快捷的清人工具,需要有管理员权限\n"+
+					"5.每日打卡,触发指令:'帮助 每日打卡'\n"+
 					"还有更多神秘功能待你探索.")
 				return
 			}
@@ -466,6 +508,18 @@ func hkd(args iotqq.Message, at string, commandstr []string) error {
 				}
 				args.SendMessage(" 服务器开小差了,搜索失败T T,稍后再试一次吧")
 				println(err.Error())
+				return
+			}
+			n, flag, err := command.IsAdult(args.CurrentPacket.Data, &model.PicInfo{
+				Url:  "",
+				Byte: img,
+			})
+			if n == 2 || n == 3 {
+				_ = command.BanR18(commandstr[3])
+				if flag {
+					return
+				}
+				args.SendMessage("触发颜色警告,一定限度后进入黑名单")
 				return
 			}
 			base64Str := base64.StdEncoding.EncodeToString(img)
