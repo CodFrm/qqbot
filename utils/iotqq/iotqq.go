@@ -448,6 +448,44 @@ func IsAdmin(group int, user int64) (bool, error) {
 	return false, nil
 }
 
+func IsInGroup(group int, qq int64) (bool, error) {
+	ret := make([]int64, 0)
+	if err := db.GetOrSet("qqgroup:user:list"+strconv.Itoa(group), &ret, func() (interface{}, error) {
+		members, err := GetGroupUserList(group)
+		if err != nil {
+			return ret, nil
+		}
+		for _, v := range members {
+			ret = append(ret, v.MemberUin)
+		}
+		return ret, nil
+	}, db.WithTTL(time.Hour)); err != nil {
+		return false, err
+	}
+	for _, v := range ret {
+		if v == qq {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func Kick(group int, qq int64) (string, error) {
+	tmp := make(map[string]interface{})
+	tmp["ActionType"] = 3
+	tmp["GroupID"] = group
+	tmp["ActionUserID"] = qq
+	tmp["Content"] = ""
+	tmp1, _ := json.Marshal(tmp)
+	resp, err := (http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=GroupMgr&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1)))
+	if err != nil {
+		return "", nil
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	return string(body), nil
+}
+
 func ModifyGroupCard(qqgroup int, UserID int64, NewNick string) (string, error) {
 	tmp := make(map[string]interface{})
 	tmp["GroupID"] = qqgroup

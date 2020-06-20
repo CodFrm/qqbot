@@ -37,7 +37,7 @@ function isAdmin(CurrentQQ, qqgroup, qq, memberlist)
                 end
                 adminCache[id][list["TroopList"][i].GroupOwner] = 1
             end
-            NextToken = list["NextToken"]
+            NextToken = PkgCodec.ToString(list["NextToken"])
             if NextToken == "" then
                 break
             end

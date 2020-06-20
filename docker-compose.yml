@@ -7,6 +7,9 @@ services:
       container_name: bot_redis
       ports:
           - 6379:6379
+      volumes:
+      - ./docker/redis:/data
+      - ./docker/redis.conf:/etc/redis/redis.conf
 
     mysql:
       image: mysql

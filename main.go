@@ -87,7 +87,7 @@ func main() {
 						continue
 					}
 					defer resp.Body.Close()
-					picinfo[0].Byte, _ = ioutil.ReadAll(resp.Body)
+					v.Byte, _ = ioutil.ReadAll(resp.Body)
 					if resp.ContentLength > 1024*1024 {
 						continue
 					}
@@ -105,10 +105,7 @@ func main() {
 					}
 				}
 			}
-			content, ok := val["Content"].(string)
-			if !ok {
-				return
-			}
+			content, _ := val["Content"].(string)
 			if picinfo[0].Byte == nil {
 				resp, err := http.Get(picinfo[0].Url)
 				if err != nil {
@@ -168,6 +165,21 @@ func main() {
 					} else {
 						iotqq.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "正常图片")
 					}
+				}
+			} else if ok := command.IsWordGroup(args.CurrentPacket.Data.FromGroupID); ok && !command.IsSign(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID) {
+				if s, err := command.IsWordOk(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, args.CurrentPacket.Data.Content); err != nil {
+					sendErr(args, err)
+					return
+				} else if s != "" {
+					args.SendMessage(s)
+					return
+				}
+				if s, err := command.IsWordImage(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, picinfo[0].Byte); err != nil {
+					sendErr(args, err)
+					return
+				} else if s != "" {
+					args.SendMessage(s)
+					return
 				}
 			}
 		} else if args.CurrentPacket.Data.MsgType == "TextMsg" {

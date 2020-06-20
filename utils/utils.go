@@ -15,6 +15,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -129,6 +130,7 @@ func StringToInt64(i string) int64 {
 }
 
 func Nmsl() string {
+	return "骂不出来了,👴举报一手"
 	f := rand.Intn(2)
 	var err error
 	var resp []byte
@@ -138,9 +140,14 @@ func Nmsl() string {
 		resp, err = HttpGet("https://nmsl.shadiao.app/api.php?lang=zh_cn", nil, nil)
 	}
 	if err != nil {
-		return "骂不出来了,劳资举报一手"
+		return "骂不出来了,👴举报一手"
 	}
 	ret := string(resp)
 	ret = strings.ReplaceAll(ret, "妈", "🐴")
 	return ret
+}
+
+func RegexMatch(content string, command string) []string {
+	reg := regexp.MustCompile(command)
+	return reg.FindStringSubmatch(content)
 }
