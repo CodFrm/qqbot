@@ -7,6 +7,7 @@ import (
 	"github.com/CodFrm/iotqq-plugins/command"
 	"github.com/CodFrm/iotqq-plugins/config"
 	"github.com/CodFrm/iotqq-plugins/db"
+	"github.com/CodFrm/iotqq-plugins/handler"
 	"github.com/CodFrm/iotqq-plugins/model"
 	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
@@ -57,6 +58,10 @@ func main() {
 			return
 		}
 		if err := command.IsBlackList("group" + strconv.Itoa(args.CurrentPacket.Data.FromGroupID)); err != nil {
+			return
+		}
+		if args.CurrentPacket.Data.MsgType == "XmlMsg" {
+			handler.HandlerXmlMsg(args)
 			return
 		}
 		if args.CurrentPacket.Data.MsgType == "PicMsg" {

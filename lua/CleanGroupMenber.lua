@@ -185,18 +185,18 @@ function topk(arr, num, sort)
     end
     table.sort(ret, sort)
     for i, v in ipairs(arr) do
-        if tgsort(v, ret[1]) then
+        if sort(v, ret[1]) then
             --替换,下沉
             ret[1] = v
             for i = 1, num / 2 do
                 pos = i * 2
-                if tgsort(ret[i], ret[pos]) then
+                if sort(ret[i], ret[pos]) then
                     tmp = ret[i]
                     ret[i] = ret[pos]
                     ret[pos] = tmp
                 end
                 pos = i * 2 + 1
-                if num >= pos and tgsort(ret[i], ret[pos]) then
+                if num >= pos and sort(ret[i], ret[pos]) then
                     tmp = ret[i]
                     ret[i] = ret[pos]
                     ret[pos] = tmp
