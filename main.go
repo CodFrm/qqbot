@@ -329,8 +329,25 @@ func main() {
 				if str, err := command.Sign(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID); err != nil {
 					sendErr(args, err)
 				} else {
-					args.SendMessage(str)
+					if ok := command.IsWordGroup(args.CurrentPacket.Data.FromGroupID); ok {
+						args.SendMessage(str + ",请注意,本群后面将取消打卡指令,请分享/拍照进行打卡")
+					} else {
+						args.SendMessage(str)
+					}
 				}
+				//if ok := command.IsWordGroup(args.CurrentPacket.Data.FromGroupID); ok {
+				//	if str, err := command.SignByWord(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID); err != nil {
+				//		sendErr(args, err)
+				//	} else if str != "" {
+				//		args.SendMessage(str + ",请注意,本群后面将取消打卡指令,请分享/拍照进行打卡")
+				//	}
+				//} else {
+				//	if str, err := command.Sign(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID); err != nil {
+				//		sendErr(args, err)
+				//	} else if str != "" {
+				//		args.SendMessage(str)
+				//	}
+				//}
 				return
 			} else if cmd, ok := args.CommandMatch("^(添加|删除)奖惩 (.+?)( (.*?)|)$"); ok {
 				reargs := strings.Split(cmd[4], " ")

@@ -25,7 +25,7 @@ var nmslEnglish []string
 func SignInit() {
 	c := cron.New(cron.WithSeconds())
 	c.AddFunc("0 0 7 * * ?", everyDay)
-	c.AddFunc("0 0 * * * ?", scanSite)
+	c.AddFunc("0 0/15 * * * ?", scanSite)
 	c.Start()
 	rand.Seed(time.Now().UnixNano())
 	nmslEnglish = strings.Split(`你妈逼你今天学习了吗？废物

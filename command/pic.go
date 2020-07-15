@@ -180,7 +180,7 @@ func rotate90(m image.Image) image.Image {
 	rotate90 := image.NewRGBA(image.Rect(0, 0, m.Bounds().Dy(), m.Bounds().Dx()))
 	for x := m.Bounds().Min.Y; x < m.Bounds().Max.Y; x++ {
 		for y := m.Bounds().Max.X - 1; y >= m.Bounds().Min.X; y-- {
-			rotate90.Set(m.Bounds().Max.Y-x, y, m.At(y, x))
+			rotate90.Set(m.Bounds().Max.Y-x-1, y, m.At(y, x))
 		}
 	}
 	return rotate90
@@ -190,7 +190,7 @@ func mirror(m image.Image) image.Image {
 	mirror := image.NewRGBA(image.Rect(0, 0, m.Bounds().Dx(), m.Bounds().Dy()))
 	for x := m.Bounds().Min.X; x < m.Bounds().Max.X; x++ {
 		for y := m.Bounds().Min.Y; y < m.Bounds().Max.Y; y++ {
-			mirror.Set(x, y, m.At(m.Bounds().Max.X-x, y))
+			mirror.Set(x, y, m.At(m.Bounds().Max.X-x-1, y))
 		}
 	}
 	return mirror
@@ -200,7 +200,7 @@ func rotate180(m image.Image) image.Image {
 	rotate180 := image.NewRGBA(image.Rect(0, 0, m.Bounds().Dx(), m.Bounds().Dy()))
 	for x := m.Bounds().Min.X; x < m.Bounds().Max.X; x++ {
 		for y := m.Bounds().Min.Y; y < m.Bounds().Max.Y; y++ {
-			rotate180.Set(m.Bounds().Max.X-x, m.Bounds().Max.Y-y, m.At(x, y))
+			rotate180.Set(m.Bounds().Max.X-x-1, m.Bounds().Max.Y-y-1, m.At(x, y))
 		}
 	}
 	return rotate180
