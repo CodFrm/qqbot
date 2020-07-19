@@ -1,0 +1,43 @@
+# 机器人api调用地址
+url: 127.0.0.1:8888
+
+# 机器人IP
+addr: 127.0.0.1
+
+# 机器人端口
+port: 8888
+
+# 机器人qq
+qq: 88888
+
+# 管理员qq
+admin-qq:
+  - 10000
+
+# p站账号cookie(可用f12开发者工具,直接复制粘贴cookie)
+pixiv:
+  cookie: xx=xx
+
+# 一个ssr,用于翻墙爬取p站信息
+ssr: ssr://aes-256-cfb:pwd@ip:port?obfs=http_simple&obfs_param=download.windowsupdate.com&protocol=origin&protocol_param=
+
+# mysql配置
+mysql:
+  dsn: root:password@tcp(127.0.0.1:3306)/bot?charset=utf8mb4&collation=utf8mb4_unicode_ci&parseTime=True&loc=Local
+
+# redis配置
+redis:
+  addr: localhost:6379
+  password:
+  db: 0
+
+# 高清重制图片apikey,请前往[https://deepai.org/machine-learning-model/waifu2x]申请
+hdkey: 00000
+
+# 图片鉴黄apikey,请前往[https://www.moderatecontent.com/]申请
+moderate-key: 00000
+
+# 管理群,设置的群将会使用鉴黄功能
+manage-group:
+  - 888888
+
