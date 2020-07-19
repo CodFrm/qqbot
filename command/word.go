@@ -26,6 +26,10 @@ func IsWordOk(group int, qq int64, msg string) (string, error) {
 		//百词斩
 		flag = true
 	}
+	str = utils.RegexMatch(msg, "source name=\\\\\"不背单词\\\\\" icon=\\\\\"")
+	if len(str) > 0 {
+		flag = true
+	}
 	if flag {
 		return Sign(group, qq)
 	}
