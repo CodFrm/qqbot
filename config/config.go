@@ -21,6 +21,8 @@ type Config struct {
 	ManageGroupMap map[int]struct{}
 	AdminQQ        []int64 `yaml:"admin-qq"`
 	AdminQQMap     map[int64]struct{}
+	Feature        []string
+	FeatureMap     map[string]struct{}
 }
 
 type MySQL struct {
@@ -58,6 +60,10 @@ func Init(filename string) error {
 	AppConfig.AdminQQMap = make(map[int64]struct{})
 	for _, v := range AppConfig.AdminQQ {
 		AppConfig.AdminQQMap[v] = struct{}{}
+	}
+	AppConfig.FeatureMap = make(map[string]struct{})
+	for _, v := range AppConfig.Feature {
+		AppConfig.FeatureMap[v] = struct{}{}
 	}
 	return nil
 }

@@ -54,6 +54,26 @@ func main() {
 	lastContent := make(map[int]string)
 	lastNum := make(map[int]int)
 	if err := c.On("OnGroupMsgs", func(h *gosocketio.Channel, args iotqq.Message) {
+		if _, ok := config.AppConfig.FeatureMap["alimama"]; ok {
+			if _, ok := args.CommandMatch("^外卖 帮助$"); ok {
+				args.SendMessage("【活动链接】https://m.tb.cn/h.VsVRwwj\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看\n" +
+					"1.外卖,触发指令'外卖 [微信*]',可获取外卖红包链接,增加[微信]参数可获取微信小程序下单二维码图片\n" +
+					"后续将会提供外卖返现功能")
+				return
+			} else if cmd, ok := args.CommandMatch("^(外卖|来点好吃的)(.*?|)$"); ok {
+				if strings.Index(cmd[2], "微信") != -1 {
+					b := utils.FileBase64("./data/image/elm_wx.jpg")
+					args.CurrentPacket.Data.SendPicByBase64("", b)
+				} else {
+					args.SendMessage("每日领饿了么餐饮红包\n【活动链接】https://m.tb.cn/h.VsVRwwj \n-----------------\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看\n" +
+						"后续将会提供外卖返现功能(不知道用啥文案了)")
+				}
+				return
+			}
+		}
+		if _, ok := config.AppConfig.FeatureMap["base"]; !ok {
+			return
+		}
 		if err := command.IsBlackList(strconv.FormatInt(args.CurrentPacket.Data.FromUserID, 10)); err != nil {
 			return
 		}

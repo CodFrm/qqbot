@@ -122,11 +122,12 @@ func (d *Message) IsAdmin() bool {
 
 type Options struct {
 	NotAt bool
+	At    int64
 }
 
 type Option func(o *Options)
 
-func (d *Message) buildOptions(args ...Option) *Options {
+func buildOptions(args ...Option) *Options {
 	ret := &Options{}
 	for _, v := range args {
 		v(ret)
@@ -135,7 +136,7 @@ func (d *Message) buildOptions(args ...Option) *Options {
 }
 
 func (d *Message) SendMessage(msg string, args ...Option) error {
-	o := d.buildOptions(args...)
+	o := buildOptions(args...)
 	var err error
 	if o.NotAt {
 		_, err = SendMsg(d.CurrentPacket.Data.FromGroupID, 0, msg)
@@ -161,8 +162,15 @@ func (d *Message) NotAt() Option {
 	}
 }
 
-func (d *Data) SendPicByBase64(At int64, Content string, Base64 string) (string, error) {
+func (d *Message) At(at int64) Option {
+	return func(o *Options) {
+		o.At = at
+	}
+}
+
+func (d *Data) SendPicByBase64(Content string, Base64 string, args ...Option) (string, error) {
 	//发送图文信息
+	o := buildOptions(args...)
 	tmp := make(map[string]interface{})
 	tmp["toUser"] = d.FromGroupID
 	tmp["sendToType"] = 2
@@ -173,7 +181,7 @@ func (d *Data) SendPicByBase64(At int64, Content string, Base64 string) (string,
 	tmp["picBase64Buf"] = Base64
 	tmp["content"] = Content
 	tmp["groupid"] = 0
-	tmp["atUser"] = At
+	tmp["atUser"] = o.At
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
 	if err != nil {

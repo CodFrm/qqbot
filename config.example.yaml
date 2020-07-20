@@ -41,3 +41,8 @@ moderate-key: 00000
 manage-group:
   - 888888
 
+# 开启功能
+feature:
+  - base
+  - alimama
+
