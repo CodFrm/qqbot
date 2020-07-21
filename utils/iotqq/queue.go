@@ -22,7 +22,7 @@ func sendQueueMsg() {
 	for {
 		m := <-groupQueue
 		SendMsg(m.Qqgroup, m.At, m.Content)
-		time.Sleep(time.Millisecond * time.Duration(rand.Intn(3000)+200))
+		time.Sleep(time.Second * time.Duration(rand.Intn(3)+1))
 	}
 }
 

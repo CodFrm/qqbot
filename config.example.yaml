@@ -46,3 +46,8 @@ feature:
   - base
   - alimama
 
+taobao:
+  appKey: 123
+  appSecret: 456
+  entrance:	https://eco.taobao.com/router/rest
+  adzoneId: 101

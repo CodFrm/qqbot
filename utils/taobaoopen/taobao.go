@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -13,42 +14,29 @@ import (
 	"time"
 )
 
-type Tabao struct {
+type Taobao struct {
 	AppKey    string
 	AppSecret string
 	Entrance  string
+	AdzoneId  string
 }
 
-type Kv struct {
-	Key   string
-	Value string
-}
-
-type Kvs []*Kv
-
-func NewTaobao(AppKey, AppSecret, Entrance string) *Tabao {
-	return &Tabao{
-		AppKey:    AppKey,
-		AppSecret: AppSecret,
-		Entrance:  Entrance,
+func NewTaobao(config TaobaoConfig) *Taobao {
+	return &Taobao{
+		AppKey:    config.AppKey,
+		AppSecret: config.AppSecret,
+		Entrance:  config.Entrance,
+		AdzoneId:  config.AdzoneId,
 	}
 }
 
-func GenKv(key, val string) *Kv {
-	return &Kv{
-		Key:   key,
-		Value: val,
-	}
-}
-
-func (t *Tabao) PublicFunc(method string, param ...*Kv) (string, error) {
+func (t *Taobao) PublicFunc(method string, param ...*Kv) (string, error) {
 	if param == nil {
 		param = make([]*Kv, 0)
 	}
 	param = append(param, GenKv("method", method))
 	param = append(param, GenKv("app_key", t.AppKey))
 	param = append(param, GenKv("timestamp", time.Now().Format("2006-01-02 15:04:05")))
-	//param = append(param, GenKv("timestamp", "2020-07-21 10:36:28"))
 	param = append(param, GenKv("format", "json"))
 	param = append(param, GenKv("v", "2.0"))
 	param = append(param, GenKv("sign_method", "hmac-sha256"))
@@ -58,7 +46,7 @@ func (t *Tabao) PublicFunc(method string, param ...*Kv) (string, error) {
 	return t.request(param)
 }
 
-func (t *Tabao) request(param []*Kv) (string, error) {
+func (t *Taobao) request(param []*Kv) (string, error) {
 	data := ""
 	for _, v := range param {
 		data += v.Key + "=" + url.QueryEscape(v.Value) + "&"
@@ -76,7 +64,7 @@ func (t *Tabao) request(param []*Kv) (string, error) {
 	return string(body), nil
 }
 
-func (t *Tabao) Sign(param []*Kv) string {
+func (t *Taobao) Sign(param []*Kv) string {
 	ret := ""
 	sort.Sort(Kvs(param))
 	for _, v := range param {
@@ -88,14 +76,50 @@ func (t *Tabao) Sign(param []*Kv) string {
 	return strings.ToUpper(sha)
 }
 
-func (k Kvs) Len() int {
-	return len(k)
+// https://open.taobao.com/api.htm?docId=35896&docType=2
+func (t *Taobao) MaterialSearch(keyword string) ([]*MaterialItem, error) {
+	str, err := t.PublicFunc("taobao.tbk.dg.material.optional", GenKv("adzone_id", t.AdzoneId), GenKv("q", keyword), GenKv("page_size", "5"))
+	if err != nil {
+		return nil, err
+	}
+	ret := MaterialSearchRespond{}
+	if err := json.Unmarshal([]byte(str), &ret); err != nil {
+		return nil, err
+	}
+	return ret.Respond.ResultList.MapData, nil
 }
 
-func (k Kvs) Less(i, j int) bool {
-	return strings.Compare(k[i].Key, k[j].Key) < 0
+// https://open.taobao.com/api.htm?docId=31127&docType=2
+func (t *Taobao) CreateTpwd(text string, url string) (string, error) {
+	str, err := t.PublicFunc("taobao.tbk.tpwd.create", GenKv("text", text), GenKv("url", url))
+	if err != nil {
+		return "", err
+	}
+	ret := MaterialSearchRespond{}
+	if err := json.Unmarshal([]byte(str), &ret); err != nil {
+		return "", err
+	}
+	return "", nil
 }
 
-func (k Kvs) Swap(i, j int) {
-	k[i], k[j] = k[j], k[i]
+type spreadRequests struct {
+	Url string `json:"url"`
+}
+
+// https://open.taobao.com/api.htm?spm=a2e0r.13193907.0.0.43f224aduPPsqi&docId=27832&docType=2
+func (t *Taobao) GetSpread(url []string) ([]*SpreadItem, error) {
+	u := make([]*spreadRequests, 0)
+	for _, v := range url {
+		u = append(u, &spreadRequests{Url: v})
+	}
+	urlJson, _ := json.Marshal(u)
+	str, err := t.PublicFunc("taobao.tbk.spread.get", GenKv("requests", string(urlJson)))
+	if err != nil {
+		return nil, err
+	}
+	ret := GetSpreadRespond{}
+	if err := json.Unmarshal([]byte(str), &ret); err != nil {
+		return nil, err
+	}
+	return ret.Respond.Results.TbkSpread, nil
 }

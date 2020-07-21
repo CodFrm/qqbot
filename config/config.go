@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 )
@@ -23,6 +24,7 @@ type Config struct {
 	AdminQQMap     map[int64]struct{}
 	Feature        []string
 	FeatureMap     map[string]struct{}
+	Taobao         taobaoopen.TaobaoConfig
 }
 
 type MySQL struct {

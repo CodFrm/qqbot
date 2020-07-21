@@ -168,6 +168,25 @@ func (d *Message) At(at int64) Option {
 	}
 }
 
+func (d *Data) SendXmlMessage(content string) (string, error) {
+	//发送图文信息
+	tmp := make(map[string]interface{})
+	tmp["toUser"] = d.FromGroupID
+	tmp["sendToType"] = 2
+	tmp["sendMsgType"] = "XmlMsg"
+	tmp["content"] = content
+	tmp["groupid"] = 0
+	tmp["atUser"] = 0
+	tmp1, _ := json.Marshal(tmp)
+	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
+	if err != nil {
+		return "", nil
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	return string(body), nil
+}
+
 func (d *Data) SendPicByBase64(Content string, Base64 string, args ...Option) (string, error) {
 	//发送图文信息
 	o := buildOptions(args...)
