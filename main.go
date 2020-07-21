@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/CodFrm/iotqq-plugins/command"
+	"github.com/CodFrm/iotqq-plugins/command/alimama"
 	"github.com/CodFrm/iotqq-plugins/config"
 	"github.com/CodFrm/iotqq-plugins/db"
 	"github.com/CodFrm/iotqq-plugins/handler"
@@ -32,6 +33,11 @@ func main() {
 	}
 	if err := command.Init(); err != nil {
 		log.Fatal(err)
+	}
+	if _, ok := config.AppConfig.FeatureMap["alimama"]; ok {
+		if err := alimama.Init(); err != nil {
+			log.Fatal(err)
+		}
 	}
 	c, err := gosocketio.Dial(
 		gosocketio.GetUrl(config.AppConfig.Addr, config.AppConfig.Port, false),
