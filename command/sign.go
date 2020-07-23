@@ -40,6 +40,7 @@ func SignInit() {
 你说你女神喜欢洋人是婊子，其实你不知道她跟外国人处对象是为了学英文，而你只会说卧槽。
 你笑印度人说英文有股咖喱味，印度人笑你连用英语说咖喱都不会说。
 你笑特朗普是傻逼，却不知道人家说着你这辈子都学不会的语言。你也配说他？`, "\n")
+	everyDay()
 }
 
 func Sign(qqgroup int, qq int64) (string, error) {
@@ -121,7 +122,7 @@ func everyDay() {
 			}
 			if val != day && val != time.Now().Format("2006:01:02") {
 				//惩罚
-				t, _ := time.Parse(val, "2006:01:02")
+				t, _ := time.Parse("2006:01:02", val)
 				go execRewards(utils.StringToInt(group), utils.StringToInt64(qq), false, t, 0)
 			}
 		}

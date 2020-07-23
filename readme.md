@@ -1,5 +1,5 @@
 ## 这里是一个自用机器人的插件库
-> 本机器人基于IOTQQ构建,机器人api等信息请前往[https://github.com/IOTQQ/IOTQQ](https://github.com/IOTQQ/IOTQQ)查看
+> 本机器人基于IOTQQ构建,机器人api等信息请前往[IOTQQ](https://github.com/IOTQQ/IOTQQ)查看
 
 ## 安装
 
