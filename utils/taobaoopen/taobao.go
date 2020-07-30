@@ -95,11 +95,11 @@ func (t *Taobao) CreateTpwd(text string, url string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ret := MaterialSearchRespond{}
+	ret := TpwdRespond{}
 	if err := json.Unmarshal([]byte(str), &ret); err != nil {
 		return "", err
 	}
-	return "", nil
+	return ret.Respond.Data.Model, nil
 }
 
 type spreadRequests struct {

@@ -25,6 +25,7 @@ type Config struct {
 	Feature        []string
 	FeatureMap     map[string]struct{}
 	Taobao         taobaoopen.TaobaoConfig
+	Urlkey         string
 }
 
 type MySQL struct {

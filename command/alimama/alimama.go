@@ -2,9 +2,12 @@ package alimama
 
 import (
 	"github.com/CodFrm/iotqq-plugins/config"
+	"github.com/CodFrm/iotqq-plugins/db"
+	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
 	"github.com/robfig/cron/v3"
+	"net/url"
 	"strconv"
 )
 
@@ -31,12 +34,22 @@ func notice() {
 	}
 }
 
-func Search(keyword string) ([]*taobaoopen.MaterialItem, error) {
+func Search(keyword string) (string, error) {
 	list, err := tb.MaterialSearch(keyword)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return list, nil
+	ret := &db.StringCache{}
+	if err := db.GetOrSet("alimama:search:"+keyword, ret, func() (interface{}, error) {
+		if s, err := GenCopywriting(list); err != nil {
+			return nil, err
+		} else {
+			return &db.StringCache{String: s}, nil
+		}
+	}); err != nil {
+		return "", nil
+	}
+	return ret.String, nil
 }
 
 func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
@@ -44,53 +57,32 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 		return "搜索结果为空", nil
 	}
 	ret := ""
-	urls := make([]string, 0)
-	couponUrls := make([]string, 0)
-	for _, v := range items {
-		if v.Url != "" {
-			urls = append(urls, "https:"+v.Url)
-		}
-		if v.CouponShareUrl != "" {
-			couponUrls = append(couponUrls, "https:"+v.CouponShareUrl)
-		}
-	}
-	var err error
-	var urlsSpread []*taobaoopen.SpreadItem
-	var couponUrlsSpread []*taobaoopen.SpreadItem
-	if len(urls) > 0 {
-		urlsSpread, err = tb.GetSpread(urls)
-		if err != nil {
-			return "", err
-		}
-	}
-	if len(couponUrls) > 0 {
-		couponUrlsSpread, err = tb.GetSpread(couponUrls)
-		if err != nil {
-			return "", err
-		}
-	}
-	urlsIndex := 0
-	couponUrlsIndex := 0
 	for _, v := range items {
 		ret += v.ShortTitle + "\n"
 		if v.CouponAmount == "" {
-			ret += "价格:" + v.ZkFinalPrice + "￥ " + urlsSpread[urlsIndex].Content + "\n"
+			tkl, err := tb.CreateTpwd(v.ShortTitle, "https:"+v.Url)
+			if err != nil || tkl == "" {
+				tkl = v.CouponShareUrl
+			}
+			ret += "价格:" + v.ZkFinalPrice + "￥ " + utils.ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
 		} else {
 			coupon_start_fee, _ := strconv.ParseFloat(v.CouponStartFee, 64)
 			zk_final_price, _ := strconv.ParseFloat(v.ZkFinalPrice, 64)
 			if zk_final_price >= coupon_start_fee {
 				coupon_amount, _ := strconv.ParseFloat(v.CouponAmount, 64)
-				ret += "原价:" + v.ZkFinalPrice + "￥ 券后价:" + strconv.FormatFloat(zk_final_price-coupon_amount, 'G', 5, 64) + "￥ " + couponUrlsSpread[couponUrlsIndex].Content + "\n"
+				tkl, err := tb.CreateTpwd(v.ShortTitle, "https:"+v.CouponShareUrl)
+				if err != nil || tkl == "" {
+					tkl = v.CouponShareUrl
+				}
+				ret += "原价:" + v.ZkFinalPrice + "￥ 券后价:" + strconv.FormatFloat(zk_final_price-coupon_amount, 'G', 5, 64) + "￥ " + utils.ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
 			} else {
-				ret += "价格:" + v.ZkFinalPrice + "￥ " + urlsSpread[urlsIndex].Content + "\n"
+				tkl, err := tb.CreateTpwd(v.ShortTitle, "https:"+v.Url)
+				if err != nil || tkl == "" {
+					tkl = v.Url
+				}
+				ret += "价格:" + v.ZkFinalPrice + "￥ " + utils.ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
 			}
 		}
-		if v.Url != "" {
-			urlsIndex++
-		}
-		if v.CouponShareUrl != "" {
-			couponUrlsIndex++
-		}
 	}
-	return ret + "后续将会通过QQ红包提供返现功能(预计外卖返现5%,购物0-10%不等)", nil
+	return ret, nil
 }

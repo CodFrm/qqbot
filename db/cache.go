@@ -38,6 +38,8 @@ func GetOrSet(key string, get interface{}, set func() (interface{}, error), opts
 		ttl := time.Duration(0)
 		if options.TTL > 0 {
 			ttl = options.TTL
+		} else {
+			ttl = time.Hour * 72
 		}
 		b, err := json.Marshal(val)
 		if err != nil {

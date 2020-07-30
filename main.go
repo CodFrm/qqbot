@@ -112,14 +112,10 @@ func main() {
 				}
 				return
 			} else if cmd, ok := args.CommandMatch("^有无(|.*?)$"); ok {
-				if items, err := alimama.Search(cmd[1]); err != nil {
+				if str, err := alimama.Search(cmd[1]); err != nil {
 					sendErr(args, err)
 				} else {
-					if str, err := alimama.GenCopywriting(items); err != nil {
-						sendErr(args, err)
-					} else {
-						args.SendMessage(str, args.NotAt())
-					}
+					iotqq.QueueSendMsg(args.CurrentPacket.Data.FromGroupID, 0, str)
 				}
 				return
 			}

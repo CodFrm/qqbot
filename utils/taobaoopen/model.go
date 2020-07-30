@@ -16,6 +16,7 @@ type MaterialItem struct {
 	CouponAmount   string `json:"coupon_amount"`
 	ZkFinalPrice   string `json:"zk_final_price"`
 	ReservePrice   string `json:"reserve_price"`
+	PictUrl        string `json:"pict_url"`
 }
 
 type GetSpreadRespond struct {
@@ -29,4 +30,12 @@ type GetSpreadRespond struct {
 type SpreadItem struct {
 	Content string `json:"content"`
 	ErrMsg  string `json:"err_msg"`
+}
+
+type TpwdRespond struct {
+	Respond struct {
+		Data struct {
+			Model string `json:"model"`
+		} `json:"data"`
+	} `json:"tbk_tpwd_create_response"`
 }
