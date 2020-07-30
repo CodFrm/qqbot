@@ -60,21 +60,55 @@ func main() {
 	lastContent := make(map[int]string)
 	lastNum := make(map[int]int)
 	if err := c.On("OnGroupMsgs", func(h *gosocketio.Channel, args iotqq.Message) {
+		if err := command.IsBlackList(strconv.FormatInt(args.CurrentPacket.Data.FromUserID, 10)); err != nil {
+			return
+		}
+		if err := command.IsBlackList("group" + strconv.Itoa(args.CurrentPacket.Data.FromGroupID)); err != nil {
+			return
+		}
+		if cmd := commandMatch(args.CurrentPacket.Data.Content, "黑名单 (.*?) (\\d)"); len(cmd) > 0 {
+			if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUserID]; !ok {
+				return
+			}
+			if err := command.BlackList(cmd[1], cmd[2], ""); err != nil {
+				sendErr(args, err)
+			} else {
+				sendErr(args, errors.New("OK"))
+			}
+			return
+		} else if cmd := commandMatch(args.CurrentPacket.Data.Content, "黑名单(.*?)(\\d)"); len(cmd) > 0 {
+			if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUserID]; !ok {
+				return
+			}
+			m := &struct {
+				UserID []int64 `json:"UserID"`
+			}{}
+			if err := json.Unmarshal([]byte(args.CurrentPacket.Data.Content), m); err != nil {
+				sendErr(args, err)
+				return
+			}
+			for _, v := range m.UserID {
+				command.BlackList(strconv.FormatInt(v, 10), cmd[2], "")
+			}
+			sendErr(args, errors.New("OK"))
+			return
+		}
 		if _, ok := config.AppConfig.FeatureMap["alimama"]; ok {
 			if _, ok := args.CommandMatch("^外卖 帮助$"); ok {
-				args.SendMessage("【活动链接】https://m.tb.cn/h.VsVRwwj\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看\n" +
+				args.SendMessage("【活动链接】https://sourl.cn/FhPLTD\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看\n" +
 					"美团可使用此链接:https://sourl.cn/Kvz8Hk\n" +
-					"1.外卖,触发指令'外卖 [微信*]',可获取外卖红包链接,增加[微信]参数可获取微信小程序下单二维码图片\n" +
-					"后续将会通过QQ红包提供返现功能")
+					"1.外卖,触发指令:'外卖 [微信*]',可获取外卖红包链接,增加[微信]参数可获取微信小程序下单二维码图片\n" +
+					"2.优惠购物,触发指令:'有无[物品名]',可获取商品列表和内部优惠券,选择你心爱的物品下单吧\n" +
+					"后续将会通过QQ红包提供返现功能(预计外卖返现5%,购物0-10%不等)")
 				return
 			} else if cmd, ok := args.CommandMatch("^(外卖|来点好吃的)(.*?|)$"); ok {
 				if strings.Index(cmd[2], "微信") != -1 {
 					b := utils.FileBase64("./data/image/elm_wx.jpg")
 					args.CurrentPacket.Data.SendPicByBase64("", b)
 				} else {
-					args.SendMessage("每日领饿了么餐饮红包\n【活动链接】https://m.tb.cn/h.VsVRwwj \n-----------------\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看\n" +
+					args.SendMessage("每日领饿了么餐饮红包\n【活动链接】https://sourl.cn/FhPLTD \n-----------------\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看\n" +
 						"美团可使用此链接:https://sourl.cn/Kvz8Hk\n" +
-						"后续将会通过QQ红包提供返现功能")
+						"后续将会通过QQ红包提供返现功能(预计外卖返现5%,购物0-10%不等)")
 				}
 				return
 			} else if cmd, ok := args.CommandMatch("^有无(|.*?)$"); ok {
@@ -91,12 +125,6 @@ func main() {
 			}
 		}
 		if _, ok := config.AppConfig.FeatureMap["base"]; !ok {
-			return
-		}
-		if err := command.IsBlackList(strconv.FormatInt(args.CurrentPacket.Data.FromUserID, 10)); err != nil {
-			return
-		}
-		if err := command.IsBlackList("group" + strconv.Itoa(args.CurrentPacket.Data.FromGroupID)); err != nil {
 			return
 		}
 		if args.CurrentPacket.Data.MsgType == "XmlMsg" {
@@ -247,15 +275,6 @@ func main() {
 				}
 				iotqq.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "OK")
 				return
-			} else if cmd := commandMatch(args.CurrentPacket.Data.Content, "黑名单 (.*?) (\\d)"); len(cmd) > 0 {
-				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUserID]; !ok {
-					return
-				}
-				if err := command.BlackList(cmd[1], cmd[2], ""); err != nil {
-					sendErr(args, err)
-					return
-				}
-				sendErr(args, errors.New("OK"))
 			} else if cmd, ok := args.CommandMatch("^清理缓存\\s?(.*?$|$)"); ok && args.IsAdmin() {
 				if err := command.CleanCache(cmd[1]); err != nil {
 					sendErr(args, err)
@@ -388,6 +407,19 @@ func main() {
 				//	}
 				//}
 				return
+			} else if cmd, ok := args.CommandMatch("^天数恢复 (\\d+) (\\d+)$"); ok {
+				if ok, _ := iotqq.IsAdmin(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID); !ok {
+					args.SendMessage("你没有权限")
+					return
+				}
+				qq, _ := strconv.ParseInt(cmd[1], 10, 64)
+				day, _ := strconv.Atoi(cmd[2])
+				if err := command.SetContinuousDay(args.CurrentPacket.Data.FromGroupID, qq, day); err != nil {
+					sendErr(args, err)
+				} else {
+					args.SendMessage("恢复成功")
+				}
+				return
 			} else if cmd, ok := args.CommandMatch("^(添加|删除)奖惩 (.+?)( (.*?)|)$"); ok {
 				reargs := strings.Split(cmd[4], " ")
 				if err := command.SetRewards(strconv.Itoa(args.CurrentPacket.Data.FromGroupID), args.CurrentPacket.Data.FromUserID, cmd[1] == "删除", cmd[2], reargs...); err != nil {
@@ -481,21 +513,6 @@ func main() {
 						time.Sleep(time.Second * 3)
 					}
 				}
-			} else if cmd := commandMatch(args.CurrentPacket.Data.Content, "黑名单(.*?)(\\d)"); len(cmd) > 0 {
-				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUserID]; !ok {
-					return
-				}
-				m := &struct {
-					UserID []int64 `json:"UserID"`
-				}{}
-				if err := json.Unmarshal([]byte(args.CurrentPacket.Data.Content), m); err != nil {
-					sendErr(args, err)
-					return
-				}
-				for _, v := range m.UserID {
-					command.BlackList(strconv.FormatInt(v, 10), cmd[2], "")
-				}
-				sendErr(args, errors.New("OK"))
 			} else if cmd := commandMatch(args.CurrentPacket.Data.Content, "给我(康康|看看)"); len(cmd) > 0 {
 				cmd := commandMatch(args.CurrentPacket.Data.Content, "图片已撤回,证据已保留ID:(\\w+)")
 				if len(cmd) > 0 {

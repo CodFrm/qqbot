@@ -71,6 +71,10 @@ func Sign(qqgroup int, qq int64) (string, error) {
 	return "打卡成功,你连续打卡了" + numcn.EncodeFromInt64(int64(continuous)) + "天", nil
 }
 
+func SetContinuousDay(qqgroup int, qq int64, day int) error {
+	return db.Redis.HSet("sign:record:"+strconv.Itoa(qqgroup), strconv.FormatInt(qq, 10), strconv.Itoa(day)).Err()
+}
+
 func IsSign(qqgroup int, qq int64) bool {
 	key := "sign:day:" + strconv.Itoa(qqgroup) + ":"
 	val, err := db.Redis.HGet(key+time.Now().Format("2006:01:02"), strconv.FormatInt(qq, 10)).Result()

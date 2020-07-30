@@ -130,7 +130,6 @@ func StringToInt64(i string) int64 {
 }
 
 func Nmsl() string {
-	return "骂不出来了,👴举报一手"
 	f := rand.Intn(2)
 	var err error
 	var resp []byte

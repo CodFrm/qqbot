@@ -42,6 +42,8 @@ manage-group:
   - 888888
 
 # 开启功能
+## base 基础功能
+## alimama 淘宝客功能
 feature:
   - base
   - alimama
