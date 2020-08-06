@@ -92,6 +92,13 @@ func main() {
 			}
 			sendErr(args, errors.New("OK"))
 			return
+		} else if cmd, ok := args.CommandMatch("^清理缓存\\s?(.*?$|$)"); ok && args.IsAdmin() {
+			if err := command.CleanCache(cmd[1]); err != nil {
+				sendErr(args, err)
+				return
+			}
+			args.SendMessage("OK")
+			return
 		}
 		if _, ok := config.AppConfig.FeatureMap["alimama"]; ok {
 			if _, ok := args.CommandMatch("^外卖 帮助$"); ok {
@@ -111,12 +118,13 @@ func main() {
 						"后续将会通过QQ红包提供返现功能(预计外卖返现5%,购物0-10%不等)")
 				}
 				return
-			} else if cmd, ok := args.CommandMatch("^有无(|.*?)$"); ok {
-				if str, err := alimama.Search(cmd[1]); err != nil {
-					sendErr(args, err)
-				} else {
-					iotqq.QueueSendMsg(args.CurrentPacket.Data.FromGroupID, 0, str)
-				}
+			} else if _, ok := args.CommandMatch("^有无(|.*?)$"); ok {
+				args.SendMessage("功能调整中...")
+				//if str, err := alimama.Search(cmd[1]); err != nil {
+				//	sendErr(args, err)
+				//} else {
+				//	iotqq.QueueSendMsg(args.CurrentPacket.Data.FromGroupID, 0, str)
+				//}
 				return
 			}
 		}
@@ -270,13 +278,6 @@ func main() {
 					return
 				}
 				iotqq.SendMsg(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, "OK")
-				return
-			} else if cmd, ok := args.CommandMatch("^清理缓存\\s?(.*?$|$)"); ok && args.IsAdmin() {
-				if err := command.CleanCache(cmd[1]); err != nil {
-					sendErr(args, err)
-					return
-				}
-				args.SendMessage("OK")
 				return
 			} else if _, ok := args.CommandMatch("^(当前|本群)场景$"); ok {
 				list, err := command.QueryGroupScenes(args.CurrentPacket.Data.FromGroupID)
