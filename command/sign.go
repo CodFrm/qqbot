@@ -18,9 +18,11 @@ import (
 var RewardsMap = map[string]func(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string){
 	"设置名片": rewardGroupName, "nmsl": rewardNmsl,
 	"nmsl单词特供版": rewardNmsl2, "踢出本群": rewardKick,
+	"温柔词典": rewardRainbowFart,
 }
 
 var nmslEnglish []string
+var rainbowFart []string
 
 func SignInit() {
 	c := cron.New(cron.WithSeconds())
@@ -40,6 +42,17 @@ func SignInit() {
 你说你女神喜欢洋人是婊子，其实你不知道她跟外国人处对象是为了学英文，而你只会说卧槽。
 你笑印度人说英文有股咖喱味，印度人笑你连用英语说咖喱都不会说。
 你笑特朗普是傻逼，却不知道人家说着你这辈子都学不会的语言。你也配说他？`, "\n")
+	rainbowFart = strings.Split(`我喜欢背单词，因为我喜欢你，而你喜欢背单词，所以请让我一直喜欢背单词好吗？
+你知道吗？我朋友一直很奇怪，为什么我高考58分却能过四级，只有我知道，是因为我不想你看低我
+我学英语的唯一动力，就是希望写一首英文情诗给你，所以答应我，请你好好背单词，可以看懂好嘛？
+你知道我为什么想让你学英语么？因为只有你学英语的时候，才会对我说i love you
+为什么我想让你背单词，因为我想有一天，我问你我好孤独怎么说，你可以对我说i love you
+你不可以这么懒惰的！再不背单词我就叫警察叔叔给你抓走了哦，那样你就再也看不到我了！
+我当初没有跟心爱的人考到一个学校，最大的鸿沟就是我英语58，而她110，所以不要再重复我的悲剧，好嘛
+如果你每天都更努力一点，那我就能喜欢你多一点！所以答应我继续背单词好不好嘛！
+你说如果我们一起考过六级，就让我跟你在一起，所以我一直在努力，因为放弃你我做不到，请你也不要放弃我好不好
+我背了好多好多单词，只希望有一天能漂洋过海去看他，在过年的时候跟他说一声happy new year 希望你也努力，不要将来有一天来一句过年好 二妞
+阿巴阿巴阿巴阿巴阿巴阿巴阿巴阿巴阿巴阿巴阿巴`, "\n")
 }
 
 func Sign(qqgroup int, qq int64) (string, error) {
@@ -263,4 +276,8 @@ func rewardKick(group int, qq int64, rewards bool, day time.Time, continuous int
 
 func delSign(group int, qq int64) {
 	db.Redis.HDel("sign:end:record:"+strconv.Itoa(group), strconv.FormatInt(qq, 10))
+}
+
+func rewardRainbowFart(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
+	iotqq.QueueSendMsg(group, qq, rainbowFart[rand.Intn(len(rainbowFart))])
 }

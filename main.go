@@ -105,8 +105,8 @@ func main() {
 				args.SendMessage("【活动链接】https://sourl.cn/FhPLTD\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看\n" +
 					"美团可使用此链接:https://sourl.cn/Kvz8Hk\n" +
 					"1.外卖,触发指令:'外卖 [微信*]',可获取外卖红包链接,增加[微信]参数可获取微信小程序下单二维码图片\n" +
-					"2.优惠购物,触发指令:'有无[物品名]',可获取商品列表和内部优惠券,选择你心爱的物品下单吧\n" +
-					"后续将会通过QQ红包提供返现功能(预计外卖返现5%,购物0-10%不等)")
+					"2.优惠购物,触发指令:'有无[物品名]',可获取商品列表和内部优惠券,选择你心爱的物品下单吧" +
+					"")
 				return
 			} else if cmd, ok := args.CommandMatch("^(外卖|来点好吃的)(.*?|)$"); ok {
 				if strings.Index(cmd[2], "微信") != -1 {
@@ -114,8 +114,8 @@ func main() {
 					args.CurrentPacket.Data.SendPicByBase64("", b)
 				} else {
 					args.SendMessage("每日领饿了么餐饮红包\n【活动链接】https://sourl.cn/FhPLTD \n-----------------\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看\n" +
-						"美团可使用此链接:https://sourl.cn/Kvz8Hk\n" +
-						"后续将会通过QQ红包提供返现功能(预计外卖返现5%,购物0-10%不等)")
+						"美团可使用此链接:https://sourl.cn/Kvz8Hk" +
+						"")
 				}
 				return
 			} else if _, ok := args.CommandMatch("^有无(|.*?)$"); ok {
@@ -223,6 +223,8 @@ func main() {
 					iotqq.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
 				}
 			} else if strings.Index(content, "图片鉴") == 0 && (strings.Index(content, "黄") != -1 || strings.Index(content, "色") != -1) {
+				args.SendMessage("功能调整中...")
+				return
 				if ok, _, err := command.IsAdult(args.CurrentPacket.Data, picinfo[0]); err != nil {
 					if ok == 1 {
 						println(err)
@@ -258,6 +260,10 @@ func main() {
 					return
 				}
 			}
+		} else if _, ok := args.CommandMatch("可不可以对我温柔一点"); ok && command.IsWordGroup(args.CurrentPacket.Data.FromGroupID) {
+			command.SetRewards(strconv.Itoa(args.CurrentPacket.Data.FromGroupID), args.CurrentPacket.Data.FromUserID, true, "nmsl单词特供版")
+			command.SetRewards(strconv.Itoa(args.CurrentPacket.Data.FromGroupID), args.CurrentPacket.Data.FromUserID, false, "温柔词典")
+			return
 		} else if args.CurrentPacket.Data.MsgType == "TextMsg" {
 			regex := regexp.MustCompile("^来((\\d*)份|点)好[康|看]的(.*?)(图|$)")
 			ret := regex.FindStringSubmatch(args.CurrentPacket.Data.Content)
@@ -594,6 +600,8 @@ func commandMatch(content string, command string) []string {
 }
 
 func hkd(args iotqq.Message, at string, commandstr []string) error {
+	args.SendMessage("功能调整中...")
+	return nil
 	num, _ := strconv.Atoi(commandstr[2])
 	if num <= 0 {
 		num = 1

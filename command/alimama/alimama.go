@@ -31,8 +31,8 @@ func notice(t string) func() {
 		}
 		for _, v := range list {
 			iotqq.QueueSendMsg(v.GroupId, 0, t+"\nhttps://sourl.cn/FhPLTD\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看."+
-				"美团可使用此链接:https://sourl.cn/Kvz8Hk\n"+
-				"后续将会通过QQ红包提供返现功能(预计外卖返现5%,购物0-10%不等)")
+				"美团可使用此链接:https://sourl.cn/Kvz8Hk"+
+				"")
 		}
 	}
 }
