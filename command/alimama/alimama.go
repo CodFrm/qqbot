@@ -1,24 +1,27 @@
 package alimama
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/CodFrm/iotqq-plugins/config"
 	"github.com/CodFrm/iotqq-plugins/db"
+	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
-	"github.com/robfig/cron/v3"
 	"strconv"
+	"strings"
 )
 
 var tb *taobaoopen.Taobao
 
 func Init() error {
-	c := cron.New(cron.WithSeconds())
-	c.AddFunc("0 30 7 * * ?", notice("美好的一天开始了,记得吃早餐哦."))
-	c.AddFunc("0 30 11 * * ?", notice("该吃中饭啦,来一份外卖吧~"))
-	c.AddFunc("0 30 14 * * ?", notice("下午茶时间到啦,来份奶茶吧~"))
-	c.AddFunc("0 30 17 * * ?", notice("该吃晚饭啦,来一份外卖吧~"))
-	c.AddFunc("0 30 10 * * ?", notice("夜宵时间,来撸串"))
-	c.Start()
+	//c := cron.New(cron.WithSeconds())
+	//c.AddFunc("0 30 7 * * ?", notice("美好的一天开始了,记得吃早餐哦."))
+	//c.AddFunc("0 30 11 * * ?", notice("该吃中饭啦,来一份外卖吧~"))
+	//c.AddFunc("0 30 14 * * ?", notice("下午茶时间到啦,来份奶茶吧~"))
+	//c.AddFunc("0 30 17 * * ?", notice("该吃晚饭啦,来一份外卖吧~"))
+	//c.AddFunc("0 30 10 * * ?", notice("夜宵时间,来撸串"))
+	//c.Start()
 	tb = taobaoopen.NewTaobao(config.AppConfig.Taobao)
 	return nil
 }
@@ -35,6 +38,43 @@ func notice(t string) func() {
 				"")
 		}
 	}
+}
+
+func AddGroup(qqgroup string, rm bool) error {
+	if rm {
+		return db.Redis.SRem("alimama:group:list", qqgroup).Err()
+	}
+	return db.Redis.SAdd("alimama:group:list", qqgroup).Err()
+}
+
+func Forward(args iotqq.Message) error {
+	//非图片,直接转发
+	if args.CurrentPacket.Data.MsgType == "TextMsg" {
+		return args.SendMessage(args.CurrentPacket.Data.Content)
+	} else if args.CurrentPacket.Data.MsgType == "PicMsg" {
+		pic := &iotqq.PicMsgContent{}
+		if err := json.Unmarshal([]byte(args.CurrentPacket.Data.Content), pic); err != nil {
+			return err
+		}
+		if tkl, ok := args.CommandMatch(".(\\w{10,})."); ok {
+			//处理口令
+			if ret, err := tb.ConversionTkl(tkl[1]); err != nil {
+				return err
+			} else {
+				newtkl := utils.RegexMatch(ret.TbkPrivilegeGetResponse.Result.Data.Tkl, "(\\w+)")
+				pic.Content = strings.ReplaceAll(pic.Content, tkl[1], newtkl[1])
+			}
+		}
+		list, err := db.Redis.SMembers("alimama:group:list").Result()
+		if err != nil {
+			return err
+		}
+		for _, v := range list {
+			iotqq.SendPicByUrl(utils.StringToInt(v), 0, pic.Content, pic.FriendPic[0].Url)
+		}
+		return nil
+	}
+	return errors.New("不支持的类型")
 }
 
 func Search(keyword string) (string, error) {

@@ -53,5 +53,8 @@ taobao:
   appSecret: 456
   entrance:	https://eco.taobao.com/router/rest
   adzoneId: 101
+  ztkAppKey: ztkkey
+  sid: ztksid
+  pid: ztkpid
 
 urlkey: xxxxxx

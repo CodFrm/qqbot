@@ -106,7 +106,18 @@ type Data struct {
 	MsgTime       int         `json:"MsgTime"`
 	MsgType       string      `json:"MsgType"`
 	RedBaginfo    interface{} `json:"RedBaginfo"`
+	FromUin       int64       `json:"FromUin"`
+	ToUin         int64       `json:"ToUin"`
+	TempUin       int64       `json:"TempUin"`
 }
+
+type PicMsgContent struct {
+	Content   string `json:"Content"`
+	FriendPic []struct {
+		Url string `json:"Url"`
+	} `json:"FriendPic"`
+}
+
 type Message struct {
 	CurrentPacket CurrentPacket `json:"CurrentPacket"`
 	CurrentQQ     int64         `json:"CurrentQQ"`
@@ -139,7 +150,14 @@ func (d *Message) SendMessage(msg string, args ...Option) error {
 	o := buildOptions(args...)
 	var err error
 	if o.NotAt {
-		_, err = SendMsg(d.CurrentPacket.Data.FromGroupID, 0, msg)
+		d.CurrentPacket.Data.FromUserID = 0
+	}
+	if d.CurrentPacket.Data.TempUin > 0 {
+		//临时
+		_, err = SendPrivateMsg(d.CurrentPacket.Data.TempUin, d.CurrentPacket.Data.FromUin, msg)
+	} else if d.CurrentPacket.Data.FromUin > 0 {
+		//私聊
+		_, err = SendFriendMsg(d.CurrentPacket.Data.FromUin, msg)
 	} else {
 		_, err = SendMsg(d.CurrentPacket.Data.FromGroupID, d.CurrentPacket.Data.FromUserID, msg)
 	}
@@ -166,6 +184,30 @@ func (d *Message) At(at int64) Option {
 	return func(o *Options) {
 		o.At = at
 	}
+}
+
+func (d *Message) SendPicUrl(Content string, Url string, args ...Option) (string, error) {
+	//发送图文信息
+	o := buildOptions(args...)
+	tmp := make(map[string]interface{})
+	tmp["toUser"] = d.CurrentPacket.Data.FromGroupID
+	tmp["sendToType"] = 2
+	tmp["sendMsgType"] = "PicMsg"
+	tmp["picBase64Buf"] = ""
+	tmp["fileMd5"] = ""
+	tmp["picUrl"] = Url
+	tmp["picBase64Buf"] = ""
+	tmp["content"] = Content
+	tmp["groupid"] = 0
+	tmp["atUser"] = o.At
+	tmp1, _ := json.Marshal(tmp)
+	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
+	if err != nil {
+		return "", nil
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	return string(body), nil
 }
 
 func (d *Data) SendXmlMessage(content string) (string, error) {
@@ -346,6 +388,53 @@ func SendFriendPicMsg(qq int64, Content string, Base64 string) (string, error) {
 	tmp["picBase64Buf"] = Base64
 	tmp["content"] = Content
 	tmp["groupid"] = 0
+	tmp["atUser"] = 0
+	tmp1, _ := json.Marshal(tmp)
+	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
+	if err != nil {
+		return "", nil
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	if strings.Index(string(body), `"Ret":0`) == -1 {
+		return "", errors.New(string(body))
+	}
+	return string(body), nil
+}
+
+func SendFriendMsg(qq int64, Content string) (string, error) {
+	tmp := make(map[string]interface{})
+	tmp["toUser"] = qq
+	tmp["sendToType"] = 1
+	tmp["sendMsgType"] = "TextMsg"
+	tmp["picBase64Buf"] = ""
+	tmp["fileMd5"] = ""
+	tmp["picUrl"] = ""
+	tmp["picBase64Buf"] = ""
+	tmp["content"] = Content
+	tmp["groupid"] = 0
+	tmp["atUser"] = 0
+	tmp1, _ := json.Marshal(tmp)
+	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
+	if err != nil {
+		return "", nil
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	if strings.Index(string(body), `"Ret":0`) == -1 {
+		return "", errors.New(string(body))
+	}
+	return string(body), nil
+}
+
+func SendPrivateMsg(group, qq int64, Content string) (string, error) {
+	//发送图文信息
+	tmp := make(map[string]interface{})
+	tmp["toUser"] = qq
+	tmp["sendToType"] = 3
+	tmp["sendMsgType"] = "TextMsg"
+	tmp["content"] = Content
+	tmp["groupid"] = group
 	tmp["atUser"] = 0
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))

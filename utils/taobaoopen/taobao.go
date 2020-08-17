@@ -19,6 +19,9 @@ type Taobao struct {
 	AppSecret string
 	Entrance  string
 	AdzoneId  string
+	ZtkAppKey string
+	Sid       string
+	Pid       string
 }
 
 func NewTaobao(config TaobaoConfig) *Taobao {
@@ -27,6 +30,9 @@ func NewTaobao(config TaobaoConfig) *Taobao {
 		AppSecret: config.AppSecret,
 		Entrance:  config.Entrance,
 		AdzoneId:  config.AdzoneId,
+		ZtkAppKey: config.ZtkAppKey,
+		Sid:       config.Sid,
+		Pid:       config.Pid,
 	}
 }
 
@@ -122,4 +128,18 @@ func (t *Taobao) GetSpread(url []string) ([]*SpreadItem, error) {
 		return nil, err
 	}
 	return ret.Respond.Results.TbkSpread, nil
+}
+
+// http://www.zhetaoke.com/user/open/open_gaoyongzhuanlian_tkl.aspx
+func (t *Taobao) ConversionTkl(tkl string) (*ConverseTkl, error) {
+	resp, err := HttpGet("https://api.zhetaoke.com:10001/api/open_gaoyongzhuanlian_tkl.ashx?appkey="+
+		t.ZtkAppKey+"&sid="+t.Sid+"&pid="+t.Pid+"&tkl="+tkl+"&signurl=4", nil)
+	if err != nil {
+		return nil, err
+	}
+	ret := &ConverseTkl{}
+	if err := json.Unmarshal(resp, ret); err != nil {
+		return nil, err
+	}
+	return ret, nil
 }
