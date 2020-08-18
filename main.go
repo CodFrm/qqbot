@@ -60,23 +60,6 @@ func main() {
 	lastContent := make(map[int]string)
 	lastNum := make(map[int]int)
 	if err := c.On("OnFriendMsgs", func(h *gosocketio.Channel, args iotqq.Message) {
-		if _, ok := args.CommandMatch(".\\w{10,}."); ok {
-			//转发
-			if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; ok {
-
-			}
-		} else if cmd, ok := args.CommandMatch("^有无(|.*?)$"); ok {
-			if str, err := alimama.Search(cmd[1]); err != nil {
-				sendErr(args, err)
-			} else {
-				iotqq.QueueSendMsg(args.CurrentPacket.Data.FromGroupID, 0, str)
-			}
-			return
-		}
-	}); err != nil {
-		log.Fatal(err)
-	}
-	if err := c.On("OnFriendMsgs", func(h *gosocketio.Channel, args iotqq.Message) {
 		if _, ok := args.CommandMatch(".\\w{10,}."); (ok && args.CurrentPacket.Data.Content[:3] != "淘") || args.CurrentPacket.Data.Content[:4] == "转 " {
 			if args.CurrentPacket.Data.FromUin != args.CurrentQQ {
 				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; ok {
