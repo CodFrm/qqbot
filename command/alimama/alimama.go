@@ -3,11 +3,13 @@ package alimama
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/CodFrm/iotqq-plugins/config"
 	"github.com/CodFrm/iotqq-plugins/db"
 	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -48,24 +50,31 @@ func AddGroup(qqgroup string, rm bool) error {
 }
 
 func Forward(args iotqq.Message) error {
+	if args.CurrentPacket.Data.Content[:4] == "转 " {
+		args.CurrentPacket.Data.Content = args.CurrentPacket.Data.Content[4:]
+	}
 	//非图片,直接转发
+	list, err := db.Redis.SMembers("alimama:group:list").Result()
+	if err != nil {
+		return err
+	}
 	if args.CurrentPacket.Data.MsgType == "TextMsg" {
-		return args.SendMessage(args.CurrentPacket.Data.Content)
+		args.CurrentPacket.Data.Content, _, err = DealTkl(args.CurrentPacket.Data.Content)
+		if err != nil && err.Error() != "很抱歉！商品ID解析错误！！！" {
+			return err
+		}
+		for _, v := range list {
+			iotqq.SendMsg(utils.StringToInt(v), 0, args.CurrentPacket.Data.Content)
+		}
+		return nil
 	} else if args.CurrentPacket.Data.MsgType == "PicMsg" {
 		pic := &iotqq.PicMsgContent{}
 		if err := json.Unmarshal([]byte(args.CurrentPacket.Data.Content), pic); err != nil {
 			return err
 		}
-		if tkl, ok := args.CommandMatch(".(\\w{10,})."); ok {
-			//处理口令
-			if ret, err := tb.ConversionTkl(tkl[1]); err != nil {
-				return err
-			} else {
-				newtkl := utils.RegexMatch(ret.TbkPrivilegeGetResponse.Result.Data.Tkl, "(\\w+)")
-				pic.Content = strings.ReplaceAll(pic.Content, tkl[1], newtkl[1])
-			}
-		}
-		list, err := db.Redis.SMembers("alimama:group:list").Result()
+		var err error
+		//处理口令
+		pic.Content, _, err = DealTkl(pic.Content)
 		if err != nil {
 			return err
 		}
@@ -75,6 +84,36 @@ func Forward(args iotqq.Message) error {
 		return nil
 	}
 	return errors.New("不支持的类型")
+}
+
+func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
+	if tkl := utils.RegexMatch(msg, ".(\\w{10,})."); len(tkl) >= 2 {
+		if ret, err := tb.ConversionTkl(tkl[1]); err != nil {
+			return msg, nil, err
+		} else {
+			if len(ret.Content) < 1 {
+				return msg, nil, nil
+			}
+			newtkl := utils.RegexMatch(ret.Content[0].Tkl, "(\\w+)")
+			if len(newtkl) == 2 {
+				msg = strings.ReplaceAll(msg, tkl[1], newtkl[1])
+				re := regexp.MustCompile("(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]")
+				msg = re.ReplaceAllString(msg, ret.Content[0].Shorturl)
+				return msg, ret, nil
+			}
+			return msg, nil, nil
+		}
+	}
+	return msg, nil, nil
+}
+
+func DealFl(fl string) string {
+	ret, err := strconv.ParseFloat(fl, 64)
+	if err != nil {
+		return "0"
+	}
+	ret = ret * 0.7
+	return fmt.Sprintf("%.2f", ret)
 }
 
 func Search(keyword string) (string, error) {

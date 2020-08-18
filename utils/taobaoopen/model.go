@@ -41,43 +41,82 @@ type TpwdRespond struct {
 }
 
 type ConverseTkl struct {
-	TbkPrivilegeGetResponse struct {
-		Result struct {
-			Data struct {
-				CategoryID        string `json:"category_id"`
-				CouponClickURL    string `json:"coupon_click_url"`
-				CouponEndTime     string `json:"coupon_end_time"`
-				CouponInfo        string `json:"coupon_info"`
-				CouponAmount      string `json:"coupon_amount"`
-				CouponStartfee    string `json:"coupon_startfee"`
-				CouponRemainCount string `json:"coupon_remain_count"`
-				CouponStartTime   string `json:"coupon_start_time"`
-				CouponTotalCount  string `json:"coupon_total_count"`
-				CouponType        string `json:"coupon_type"`
-				ItemID            string `json:"item_id"`
-				ItemURL           string `json:"item_url"`
-				MaxCommissionRate string `json:"max_commission_rate"`
-				MinCommissionRate string `json:"min_commission_rate"`
-				SCouponID         string `json:"s_coupon_id"`
-				SCouponAmount     string `json:"s_coupon_amount"`
-				SCouponStartfee   string `json:"s_coupon_startfee"`
-				SCouponStartTime  string `json:"s_coupon_start_time"`
-				SCouponEndTime    string `json:"s_coupon_end_time"`
-				CatLeafName       string `json:"cat_leaf_name"`
-				CatName           string `json:"cat_name"`
-				Nick              string `json:"nick"`
-				PictURL           string `json:"pict_url"`
-				Provcity          string `json:"provcity"`
-				SellerID          string `json:"seller_id"`
-				SmallImages       string `json:"small_images"`
-				Title             string `json:"title"`
-				UserType          string `json:"user_type"`
-				Volume            string `json:"volume"`
-				ZkFinalPrice      string `json:"zk_final_price"`
-				Shorturl          string `json:"shorturl"`
-				Tkl               string `json:"tkl"`
-			} `json:"data"`
-		} `json:"result"`
-		RequestID string `json:"request_id"`
-	} `json:"tbk_privilege_get_response"`
+	Status  int `json:"status"`
+	Content []struct {
+		Code                   string `json:"code"`
+		TypeOneID              string `json:"type_one_id"`
+		TaoID                  string `json:"tao_id"`
+		Title                  string `json:"title"`
+		Jianjie                string `json:"jianjie"`
+		PictURL                string `json:"pict_url"`
+		UserType               string `json:"user_type"`
+		SellerID               string `json:"seller_id"`
+		ShopDsr                string `json:"shop_dsr"`
+		Volume                 string `json:"volume"`
+		Size                   string `json:"size"`
+		QuanhouJiage           string `json:"quanhou_jiage"`
+		DateTimeYongjin        string `json:"date_time_yongjin"`
+		Tkrate3                string `json:"tkrate3"`
+		YongjinType            string `json:"yongjin_type"`
+		CouponID               string `json:"coupon_id"`
+		CouponStartTime        string `json:"coupon_start_time"`
+		CouponEndTime          string `json:"coupon_end_time"`
+		CouponInfoMoney        string `json:"coupon_info_money"`
+		CouponTotalCount       string `json:"coupon_total_count"`
+		CouponRemainCount      string `json:"coupon_remain_count"`
+		CouponInfo             string `json:"coupon_info"`
+		Juhuasuan              string `json:"juhuasuan"`
+		Taoqianggou            string `json:"taoqianggou"`
+		Haitao                 string `json:"haitao"`
+		Jiyoujia               string `json:"jiyoujia"`
+		Jinpaimaijia           string `json:"jinpaimaijia"`
+		Pinpai                 string `json:"pinpai"`
+		PinpaiName             string `json:"pinpai_name"`
+		Yunfeixian             string `json:"yunfeixian"`
+		Nick                   string `json:"nick"`
+		SmallImages            string `json:"small_images"`
+		WhiteImage             string `json:"white_image"`
+		TaoTitle               string `json:"tao_title"`
+		Provcity               string `json:"provcity"`
+		ShopTitle              string `json:"shop_title"`
+		ZhiboURL               string `json:"zhibo_url"`
+		SellCount              string `json:"sellCount"`
+		CommentCount           string `json:"commentCount"`
+		Favcount               string `json:"favcount"`
+		Score1                 string `json:"score1"`
+		Score2                 string `json:"score2"`
+		Score3                 string `json:"score3"`
+		CreditLevel            string `json:"creditLevel"`
+		ShopIcon               string `json:"shopIcon"`
+		PcDescContent          string `json:"pcDescContent"`
+		TaobaoURL              string `json:"taobao_url"`
+		CategoryID             string `json:"category_id"`
+		CategoryName           string `json:"category_name"`
+		LevelOneCategoryID     string `json:"level_one_category_id"`
+		LevelOneCategoryName   string `json:"level_one_category_name"`
+		Tkfee3                 string `json:"tkfee3"`
+		Biaoqian               string `json:"biaoqian"`
+		Tag                    string `json:"tag"`
+		DateTime               string `json:"date_time"`
+		PresaleDiscountFeeText string `json:"presale_discount_fee_text"`
+		PresaleTailEndTime     string `json:"presale_tail_end_time"`
+		PresaleTailStartTime   string `json:"presale_tail_start_time"`
+		PresaleEndTime         string `json:"presale_end_time"`
+		PresaleStartTime       string `json:"presale_start_time"`
+		PresaleDeposit         string `json:"presale_deposit"`
+		MinCommissionRate      string `json:"min_commission_rate"`
+		CouponClickURL         string `json:"coupon_click_url"`
+		ItemURL                string `json:"item_url"`
+		Shorturl               string `json:"shorturl"`
+		Tkl                    string `json:"tkl"`
+	} `json:"content"`
+}
+
+type ZtkError struct {
+	Status  int    `json:"status"`
+	Content string `json:"content"`
+}
+
+func (e *ZtkError) Error() string {
+	return e.Content
 }

@@ -77,15 +77,18 @@ func main() {
 		log.Fatal(err)
 	}
 	if err := c.On("OnFriendMsgs", func(h *gosocketio.Channel, args iotqq.Message) {
-		if _, ok := args.CommandMatch(".\\w{10,}."); ok || args.CurrentPacket.Data.Content[:2] == "转 " {
-			//转发
-			if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; ok {
-				if err := alimama.Forward(args); err != nil {
-					sendErr(args, err)
+		if _, ok := args.CommandMatch(".\\w{10,}."); (ok && args.CurrentPacket.Data.Content[:3] != "淘") || args.CurrentPacket.Data.Content[:4] == "转 " {
+			if args.CurrentPacket.Data.FromUin != args.CurrentQQ {
+				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; ok {
+					if err := alimama.Forward(args); err != nil {
+						sendErr(args, err)
+					}
+					return
 				}
-				return
 			}
-		} else if cmd, ok := args.CommandMatch("(添加|删除)群(\\d+)"); ok {
+			//转发
+		}
+		if cmd, ok := args.CommandMatch("(添加|删除)群(\\d+)"); ok {
 			if err := alimama.AddGroup(cmd[2], cmd[1] == "删除"); err != nil {
 				sendErr(args, err)
 				return

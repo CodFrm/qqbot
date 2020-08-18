@@ -133,13 +133,17 @@ func (t *Taobao) GetSpread(url []string) ([]*SpreadItem, error) {
 // http://www.zhetaoke.com/user/open/open_gaoyongzhuanlian_tkl.aspx
 func (t *Taobao) ConversionTkl(tkl string) (*ConverseTkl, error) {
 	resp, err := HttpGet("https://api.zhetaoke.com:10001/api/open_gaoyongzhuanlian_tkl.ashx?appkey="+
-		t.ZtkAppKey+"&sid="+t.Sid+"&pid="+t.Pid+"&tkl="+tkl+"&signurl=4", nil)
+		t.ZtkAppKey+"&sid="+t.Sid+"&pid="+t.Pid+"&tkl="+tkl+"&signurl=5", nil)
 	if err != nil {
 		return nil, err
 	}
 	ret := &ConverseTkl{}
 	if err := json.Unmarshal(resp, ret); err != nil {
-		return nil, err
+		retErr := &ZtkError{}
+		if err := json.Unmarshal(resp, retErr); err != nil {
+			return nil, err
+		}
+		return nil, retErr
 	}
 	return ret, nil
 }
