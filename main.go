@@ -145,7 +145,7 @@ func main() {
 				}
 				return
 			} else if _, ok := args.CommandMatch("^有无(|.*?)$"); ok {
-				args.SendMessage("功能调整中...")
+				args.SendMessage("请私聊查询")
 				//if str, err := alimama.Search(cmd[1]); err != nil {
 				//	sendErr(args, err)
 				//} else {
@@ -249,8 +249,6 @@ func main() {
 					iotqq.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, args.CurrentPacket.Data.FromUserID, msg, base64Str)
 				}
 			} else if strings.Index(content, "图片鉴") == 0 && (strings.Index(content, "黄") != -1 || strings.Index(content, "色") != -1) {
-				args.SendMessage("功能调整中...")
-				return
 				if ok, _, err := command.IsAdult(args.CurrentPacket.Data, picinfo[0]); err != nil {
 					if ok == 1 {
 						println(err)
@@ -626,8 +624,6 @@ func commandMatch(content string, command string) []string {
 }
 
 func hkd(args iotqq.Message, at string, commandstr []string) error {
-	args.SendMessage("功能调整中...")
-	return nil
 	num, _ := strconv.Atoi(commandstr[2])
 	if num <= 0 {
 		num = 1
