@@ -64,7 +64,7 @@ func main() {
 			if args.CurrentPacket.Data.FromUin != args.CurrentQQ {
 				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; ok {
 					if err := alimama.Forward(args); err != nil {
-						sendErr(args, err)
+						args.SendMessage(err.Error())
 					}
 					return
 				}
@@ -73,7 +73,7 @@ func main() {
 		}
 		if cmd, ok := args.CommandMatch("(添加|删除)群(\\d+)"); ok {
 			if err := alimama.AddGroup(cmd[2], cmd[1] == "删除"); err != nil {
-				sendErr(args, err)
+				args.SendMessage(err.Error())
 				return
 			}
 			args.SendMessage("OK")

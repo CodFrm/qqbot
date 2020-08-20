@@ -75,7 +75,7 @@ func Forward(args iotqq.Message) error {
 		var err error
 		//处理口令
 		pic.Content, _, err = DealTkl(pic.Content)
-		if err != nil {
+		if err != nil && err.Error() != "很抱歉！商品ID解析错误！！！" {
 			return err
 		}
 		for _, v := range list {
