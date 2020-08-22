@@ -64,7 +64,7 @@ func Forward(args iotqq.Message) error {
 			return err
 		}
 		for _, v := range list {
-			iotqq.SendMsg(utils.StringToInt(v), 0, args.CurrentPacket.Data.Content)
+			iotqq.QueueSendMsg(utils.StringToInt(v), 0, args.CurrentPacket.Data.Content)
 		}
 		return nil
 	} else if args.CurrentPacket.Data.MsgType == "PicMsg" {
@@ -79,7 +79,7 @@ func Forward(args iotqq.Message) error {
 			return err
 		}
 		for _, v := range list {
-			iotqq.SendPicByUrl(utils.StringToInt(v), 0, pic.Content, pic.FriendPic[0].Url)
+			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, pic.Content, pic.FriendPic[0].Url)
 		}
 		return nil
 	}
