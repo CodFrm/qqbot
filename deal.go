@@ -29,7 +29,7 @@ func dealUniversal(args iotqq.Message) bool {
 		return false
 	} else if _, ok := args.CommandMatch("绑定(\\s|)(\\d+)($|\")"); ok {
 
-	} else if cmd, ok := args.CommandMatch("订阅(\\s|)(.*?)($|\")$"); ok {
+	} else if cmd, ok := args.CommandMatch("订阅(\\s|)(.*?)($|\")"); ok && !args.Self() {
 		if err := alimama.Subscribe(args.GetGroupId(), args.GetQQ(), cmd[2]); err != nil {
 			log.Println("订阅", err)
 			args.SendMessage("发生了一个系统错误")
@@ -37,8 +37,8 @@ func dealUniversal(args iotqq.Message) bool {
 			args.SendMessage("订 阅 成 功")
 		}
 		return false
-	} else if cmd, ok := args.CommandMatch("退订(.*?|)($|\")"); ok {
-		if err := alimama.UnSubscribe(args.GetQQ(), cmd[1]); err != nil {
+	} else if cmd, ok := args.CommandMatch("退订(\\s|)(.*?)($|\")"); ok && !args.Self() {
+		if err := alimama.UnSubscribe(args.GetQQ(), cmd[2]); err != nil {
 			log.Println("退订", err)
 			args.SendMessage("发生了一个系统错误")
 		} else {

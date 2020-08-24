@@ -131,6 +131,10 @@ func (d *Message) IsAdmin() bool {
 	return ok
 }
 
+func (m *Message) Self() bool {
+	return m.CurrentQQ == m.GetQQ()
+}
+
 type Options struct {
 	NotAt bool
 	At    int64
