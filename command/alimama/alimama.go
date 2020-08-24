@@ -88,10 +88,14 @@ func Forward(args iotqq.Message) error {
 		if err != nil {
 			return err
 		}
-		url := "http:" + strings.Split(tkl.Content[0].PcDescContent, "|")[0]
+		url := tkl.Content[0].PictURL
 		content := tkl.Content[0].TaoTitle + " " + tkl.Content[0].QuanhouJiage + "￥" + "\n" + tkl.Content[0].Tkl
 		for _, v := range list {
-			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, content, url)
+			if url == "" {
+				iotqq.QueueSendMsg(utils.StringToInt(v), 0, content)
+			} else {
+				iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, content, url)
+			}
 		}
 		mq.publisher(content)
 		return nil
