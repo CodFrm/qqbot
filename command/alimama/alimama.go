@@ -81,6 +81,21 @@ func Forward(args iotqq.Message) error {
 	if err != nil {
 		return err
 	}
+	//单独的口令
+	cmd := utils.RegexMatch(args.CurrentPacket.Data.Content, "^.(\\w{10,}).$")
+	if len(cmd) > 0 {
+		_, tkl, err := DealTkl(args.CurrentPacket.Data.Content)
+		if err != nil {
+			return err
+		}
+		url := "http:" + strings.Split(tkl.Content[0].PcDescContent, "|")[0]
+		content := tkl.Content[0].TaoTitle + " " + tkl.Content[0].QuanhouJiage + "￥" + "\n" + tkl.Content[0].Tkl
+		for _, v := range list {
+			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, content, url)
+		}
+		mq.publisher(content)
+		return nil
+	}
 	if args.CurrentPacket.Data.MsgType == "TextMsg" {
 		args.CurrentPacket.Data.Content, _, err = DealTkl(args.CurrentPacket.Data.Content)
 		if err != nil && err.Error() != "很抱歉！商品ID解析错误！！！" {

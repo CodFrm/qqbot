@@ -86,6 +86,9 @@ func reconnect() *gosocketio.Client {
 				//转发
 			}
 			if cmd, ok := args.CommandMatch("(添加|删除)群(\\d+)"); ok {
+				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; !ok {
+					args.SendMessage("没有权限")
+				}
 				if err := alimama.AddGroup(cmd[2], cmd[1] == "删除"); err != nil {
 					args.SendMessage(err.Error())
 					return
