@@ -10,6 +10,7 @@ type GroupMsg struct {
 	At      int64
 	Content string
 	Url     string
+	Private bool
 }
 
 var groupQueue chan *GroupMsg
@@ -22,12 +23,20 @@ func init() {
 func sendQueueMsg() {
 	for {
 		m := <-groupQueue
-		if m.Url != "" {
-			SendPicByUrl(m.Qqgroup, m.At, m.Content, m.Url)
+		if m.Private {
+			if m.Qqgroup <= 0 {
+				SendFriendMsg(m.At, m.Content)
+			} else {
+				SendPrivateMsg(m.Qqgroup, m.At, m.Content)
+			}
 		} else {
-			SendMsg(m.Qqgroup, m.At, m.Content)
+			if m.Url != "" {
+				SendPicByUrl(m.Qqgroup, m.At, m.Content, m.Url)
+			} else {
+				SendMsg(m.Qqgroup, m.At, m.Content)
+			}
 		}
-		time.Sleep(time.Second * time.Duration(rand.Intn(3)+1))
+		time.Sleep(time.Second * time.Duration(rand.Intn(4)+1))
 	}
 }
 
@@ -46,6 +55,16 @@ func QueueSendPicMsg(qqgroup int, At int64, Content string, Url string) error {
 		At:      At,
 		Content: Content,
 		Url:     Url,
+	}
+	return nil
+}
+
+func QueueSendPrivateMsg(qqgroup int, qq int64, Content string) error {
+	groupQueue <- &GroupMsg{
+		Qqgroup: qqgroup,
+		At:      qq,
+		Content: Content,
+		Private: true,
 	}
 	return nil
 }

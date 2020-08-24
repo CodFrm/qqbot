@@ -39,6 +39,19 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	c := reconnect()
+	for {
+		select {
+		case <-time.After(time.Second * 600):
+			{
+				SendJoin(c)
+				println("doing...")
+			}
+		}
+	}
+}
+
+func reconnect() *gosocketio.Client {
 	c, err := gosocketio.Dial(
 		gosocketio.GetUrl(config.AppConfig.Addr, config.AppConfig.Port, false),
 		transport.GetDefaultWebsocketTransport())
@@ -46,7 +59,7 @@ func main() {
 		log.Fatal(err)
 	}
 	err = c.On(gosocketio.OnDisconnection, func(h *gosocketio.Channel) {
-		//log.Fatal("Disconnected")
+		log.Fatal("Disconnected")
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -60,27 +73,29 @@ func main() {
 	lastContent := make(map[int]string)
 	lastNum := make(map[int]int)
 	if err := c.On("OnFriendMsgs", func(h *gosocketio.Channel, args iotqq.Message) {
-		if _, ok := args.CommandMatch(".\\w{10,}."); (ok && args.CurrentPacket.Data.Content[:3] != "淘") || args.CurrentPacket.Data.Content[:4] == "转 " {
-			if args.CurrentPacket.Data.FromUin != args.CurrentQQ {
-				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; ok {
-					if err := alimama.Forward(args); err != nil {
-						args.SendMessage(err.Error())
+		if _, ok := config.AppConfig.FeatureMap["alimama"]; ok {
+			if _, ok := args.CommandMatch(".\\w{10,}."); len(args.CurrentPacket.Data.Content) > 5 && (ok && args.CurrentPacket.Data.Content[:3] != "淘") || args.CurrentPacket.Data.Content[:4] == "转 " {
+				if args.CurrentPacket.Data.FromUin != args.CurrentQQ {
+					if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; ok {
+						if err := alimama.Forward(args); err != nil {
+							args.SendMessage(err.Error())
+						}
+						return
 					}
+				}
+				//转发
+			}
+			if cmd, ok := args.CommandMatch("(添加|删除)群(\\d+)"); ok {
+				if err := alimama.AddGroup(cmd[2], cmd[1] == "删除"); err != nil {
+					args.SendMessage(err.Error())
 					return
 				}
-			}
-			//转发
-		}
-		if cmd, ok := args.CommandMatch("(添加|删除)群(\\d+)"); ok {
-			if err := alimama.AddGroup(cmd[2], cmd[1] == "删除"); err != nil {
-				args.SendMessage(err.Error())
+				args.SendMessage("OK")
 				return
 			}
-			args.SendMessage("OK")
-			return
-		}
-		if dealUniversal(args) {
-			return
+			if dealUniversal(args) {
+				return
+			}
 		}
 	}); err != nil {
 		log.Fatal(err)
@@ -603,15 +618,7 @@ func main() {
 		log.Fatal(err)
 	}
 	SendJoin(c)
-	for {
-		select {
-		case <-time.After(time.Second * 600):
-			{
-				SendJoin(c)
-				println("doing...")
-			}
-		}
-	}
+	return c
 }
 
 func sendErr(m iotqq.Message, err error) {
@@ -683,7 +690,9 @@ func SendJoin(c *gosocketio.Client) {
 	log.Println("获取QQ号连接")
 	result, err := c.Ack("GetWebConn", config.AppConfig.QQ, time.Second*5)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		c.Close()
+		reconnect()
 	} else {
 		log.Println("emit", result)
 	}

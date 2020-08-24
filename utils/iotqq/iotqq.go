@@ -154,7 +154,7 @@ func (d *Message) SendMessage(msg string, args ...Option) error {
 	}
 	if d.CurrentPacket.Data.TempUin > 0 {
 		//临时
-		_, err = SendPrivateMsg(d.CurrentPacket.Data.TempUin, d.CurrentPacket.Data.FromUin, msg)
+		_, err = SendPrivateMsg(int(d.CurrentPacket.Data.TempUin), d.CurrentPacket.Data.FromUin, msg)
 	} else if d.CurrentPacket.Data.FromUin > 0 {
 		//私聊
 		_, err = SendFriendMsg(d.CurrentPacket.Data.FromUin, msg)
@@ -427,7 +427,7 @@ func SendFriendMsg(qq int64, Content string) (string, error) {
 	return string(body), nil
 }
 
-func SendPrivateMsg(group, qq int64, Content string) (string, error) {
+func SendPrivateMsg(group int, qq int64, Content string) (string, error) {
 	//发送图文信息
 	tmp := make(map[string]interface{})
 	tmp["toUser"] = qq
@@ -615,4 +615,22 @@ func ModifyGroupCard(qqgroup int, UserID int64, NewNick string) (string, error) 
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	return string(body), nil
+}
+
+func (m *Message) GetGroupId() int {
+	if m.CurrentPacket.Data.TempUin > 0 {
+		return int(m.CurrentPacket.Data.TempUin)
+	} else if m.CurrentPacket.Data.FromUin > 0 {
+		return 0
+	} else {
+		return m.CurrentPacket.Data.FromGroupID
+	}
+}
+
+func (m *Message) GetQQ() int64 {
+	if m.CurrentPacket.Data.FromUin > 0 {
+		return m.CurrentPacket.Data.FromUin
+	} else {
+		return m.CurrentPacket.Data.FromUserID
+	}
 }

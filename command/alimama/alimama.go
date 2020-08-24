@@ -15,6 +15,7 @@ import (
 )
 
 var tb *taobaoopen.Taobao
+var mq *broker
 
 func Init() error {
 	//c := cron.New(cron.WithSeconds())
@@ -25,6 +26,28 @@ func Init() error {
 	//c.AddFunc("0 30 10 * * ?", notice("夜宵时间,来撸串"))
 	//c.Start()
 	tb = taobaoopen.NewTaobao(config.AppConfig.Taobao)
+	mq = NewBroker()
+	//初始化mq订阅
+	mlist, err := db.Redis.HGetAll("alimama:subscribe:list").Result()
+	if err != nil {
+		return err
+	}
+	for qq, group := range mlist {
+		tlist, err := db.Redis.SMembers("alimama:subscribe:topic:" + qq).Result()
+		if err != nil {
+			return err
+		}
+		for _, topic := range tlist {
+			mq.subscribe(topic, qq, &subscribe{
+				handler: func(info string, keyword *publisher) {
+					group, _ := strconv.ParseInt(keyword.param, 10, 64)
+					qq, _ := strconv.ParseInt(keyword.tag, 10, 64)
+					iotqq.QueueSendPrivateMsg(int(group), qq, "您关注的'"+topic+"'有新消息\n"+info+"\n回复'退订+关键字'可退订指定消息.不加关键字退订全部")
+				},
+				param: group,
+			})
+		}
+	}
 	return nil
 }
 
@@ -66,6 +89,7 @@ func Forward(args iotqq.Message) error {
 		for _, v := range list {
 			iotqq.QueueSendMsg(utils.StringToInt(v), 0, args.CurrentPacket.Data.Content)
 		}
+		mq.publisher(args.CurrentPacket.Data.Content)
 		return nil
 	} else if args.CurrentPacket.Data.MsgType == "PicMsg" {
 		pic := &iotqq.PicMsgContent{}
@@ -81,6 +105,7 @@ func Forward(args iotqq.Message) error {
 		for _, v := range list {
 			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, pic.Content, pic.FriendPic[0].Url)
 		}
+		mq.publisher(pic.Content)
 		return nil
 	}
 	return errors.New("不支持的类型")
