@@ -28,6 +28,7 @@ func SignInit() {
 	c := cron.New(cron.WithSeconds())
 	c.AddFunc("0 0 7 * * ?", everyDay)
 	c.AddFunc("0 0/15 * * * ?", scanSite)
+	c.AddFunc("0 0 20 * * ?", remind)
 	c.Start()
 	rand.Seed(time.Now().UnixNano())
 	nmslEnglish = strings.Split(`你妈逼你今天学习了吗？废物
@@ -253,7 +254,7 @@ func rewardNmsl2(group int, qq int64, rewards bool, day time.Time, continuous in
 	}
 	if rand.Intn(100) < 2 {
 		str := utils.FileBase64("./data/img/3.jpg")
-		iotqq.SendPicByBase64(group, qq, "", str)
+		iotqq.SendPicByBase64(group, qq, "你读个鬼书", str)
 		return
 	}
 	iotqq.QueueSendMsg(group, qq, strings.ReplaceAll(nmslEnglish[rand.Intn(len(nmslEnglish))], "妈", "🐴"))
@@ -280,4 +281,23 @@ func delSign(group int, qq int64) {
 
 func rewardRainbowFart(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
 	iotqq.QueueSendMsg(group, qq, rainbowFart[rand.Intn(len(rainbowFart))])
+}
+
+func remind() {
+	day := time.Now().Add(-time.Hour * 24).Format("2006:01:02")
+	key := "sign:group:record:" + day
+	list := db.Redis.HGetAll(key).Val()
+	for group := range list {
+		groupid, _ := strconv.Atoi(group)
+		if ok := IsWordGroup(groupid); !ok {
+			continue
+		}
+		qqs := db.Redis.HGetAll("sign:end:record:" + group).Val()
+		for qq, val := range qqs {
+			if val == time.Now().Add(-time.Hour*24).Format("2006:01:02") {
+				//昨天签到了,今天还没
+				iotqq.QueueSendMsg(utils.StringToInt(group), utils.StringToInt64(qq), "背单词啦!!!")
+			}
+		}
+	}
 }

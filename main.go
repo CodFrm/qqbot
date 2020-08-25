@@ -42,6 +42,7 @@ func main() {
 	c := reconnect()
 	err := c.On(gosocketio.OnDisconnection, func(h *gosocketio.Channel) {
 		log.Println("Disconnected")
+		time.Sleep(time.Second * 5)
 		c = reconnect()
 	})
 	if err != nil {
