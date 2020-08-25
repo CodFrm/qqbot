@@ -40,6 +40,13 @@ func main() {
 		}
 	}
 	c := reconnect()
+	err := c.On(gosocketio.OnDisconnection, func(h *gosocketio.Channel) {
+		log.Println("Disconnected")
+		c = reconnect()
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 	for {
 		select {
 		case <-time.After(time.Second * 600):
@@ -55,12 +62,6 @@ func reconnect() *gosocketio.Client {
 	c, err := gosocketio.Dial(
 		gosocketio.GetUrl(config.AppConfig.Addr, config.AppConfig.Port, false),
 		transport.GetDefaultWebsocketTransport())
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = c.On(gosocketio.OnDisconnection, func(h *gosocketio.Channel) {
-		log.Fatal("Disconnected")
-	})
 	if err != nil {
 		log.Fatal(err)
 	}
