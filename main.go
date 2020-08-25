@@ -307,6 +307,7 @@ func reconnect() *gosocketio.Client {
 		} else if _, ok := args.CommandMatch("可不可以对我温柔一点"); ok && command.IsWordGroup(args.CurrentPacket.Data.FromGroupID) {
 			command.SetRewards(strconv.Itoa(args.CurrentPacket.Data.FromGroupID), args.CurrentPacket.Data.FromUserID, true, "nmsl单词特供版")
 			command.SetRewards(strconv.Itoa(args.CurrentPacket.Data.FromGroupID), args.CurrentPacket.Data.FromUserID, false, "温柔词典")
+			args.SendMessage("好的宝贝🥰🥰🥰")
 			return
 		} else if args.CurrentPacket.Data.MsgType == "TextMsg" {
 			regex := regexp.MustCompile("^来((\\d*)份|点)好[康|看]的(.*?)(图|$)")

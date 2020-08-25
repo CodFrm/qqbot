@@ -30,6 +30,9 @@ func (t *broker) publisher(content string) {
 	for key, v := range t.m {
 		if strings.Index(content, key) != -1 {
 			for k, s := range v {
+				if s == nil {
+					continue
+				}
 				s.handler(content, &publisher{
 					topic: key,
 					tag:   k,
