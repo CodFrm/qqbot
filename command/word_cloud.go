@@ -13,7 +13,7 @@ import (
 )
 
 func GenWordCloud(file string) (string, error) {
-	cmd := exec.Command("python3", "data/tmp/test.py", file, "data/tmp/tmp.png")
+	cmd := exec.Command("python3", "data/tmp/wordcloud.py", file, "data/tmp/tmp.png")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = os.Stderr

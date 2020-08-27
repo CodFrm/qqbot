@@ -3,6 +3,7 @@
 iotqq-plugins
 config.yaml
 data/*.jpg
+data/group
 
 .idea
 .vscode
@@ -11,5 +12,6 @@ data/*.jpg
 *.png
 *.gif
 *.json
+*.ttf
 
 docker
