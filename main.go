@@ -106,18 +106,24 @@ func reconnect() *gosocketio.Client {
 			if dealUniversal(args) {
 				return
 			}
-			msg := ""
-			n := 1 + rand.Intn(10)
-			for i := 0; i < n; i++ {
-				msg += "阿巴"
-			}
-			if n < 2 {
-				msg += "?"
-			} else if n < 4 {
-				msg += "!"
-			}
-			args.SendMessage(msg)
 		}
+		if args.Self() {
+			return
+		}
+		msg := ""
+		n := 1 + rand.Intn(10)
+		for i := 0; i < n; i++ {
+			msg += "阿巴"
+			if rand.Intn(5) == 2 {
+				msg += ","
+			}
+		}
+		if n < 3 {
+			msg += "?"
+		} else if n < 5 {
+			msg += "!"
+		}
+		args.SendMessage(msg)
 	}); err != nil {
 		log.Fatal(err)
 	}
