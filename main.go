@@ -18,11 +18,14 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var groupfile map[int]*os.File
 
 func main() {
 	if err := config.Init("config.yaml"); err != nil {
@@ -39,6 +42,8 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	groupfile = make(map[int]*os.File)
+	os.MkdirAll("data/group", os.ModeDir)
 	c := reconnect()
 	err := c.On(gosocketio.OnDisconnection, func(h *gosocketio.Channel) {
 		log.Println("Disconnected")
@@ -106,11 +111,33 @@ func reconnect() *gosocketio.Client {
 		log.Fatal(err)
 	}
 	if err := c.On("OnGroupMsgs", func(h *gosocketio.Channel, args iotqq.Message) {
+		//写词日志
+		f, ok := groupfile[args.CurrentPacket.Data.FromGroupID]
+		if !ok {
+			f, err = os.OpenFile("data/group/"+strconv.Itoa(args.CurrentPacket.Data.FromGroupID)+"_"+time.Now().Format("2006_01_02")+".txt",
+				os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
+			groupfile[args.CurrentPacket.Data.FromGroupID] = f
+		}
+		if args.CurrentPacket.Data.MsgType == "TextMsg" {
+			f.WriteString(args.CurrentPacket.Data.Content + "\n")
+		}
 		if err := command.IsBlackList(strconv.FormatInt(args.CurrentPacket.Data.FromUserID, 10)); err != nil {
 			return
 		}
 		if err := command.IsBlackList("group" + strconv.Itoa(args.CurrentPacket.Data.FromGroupID)); err != nil {
 			return
+		}
+		if args.CurrentPacket.Data.MsgType == "TextMsg" {
+			if _, ok := args.CommandMatch("^词云$"); ok {
+				s, err := command.GenWordCloud("data/group/" + strconv.Itoa(args.CurrentPacket.Data.FromGroupID) + "_" + time.Now().Format("2006_01_02") + ".txt")
+				if err != nil {
+					log.Println(err)
+					args.SendMessage("词云生成失败")
+					return
+				}
+				iotqq.SendPicByBase64(args.CurrentPacket.Data.FromGroupID, 0, "今日词云", s)
+				return
+			}
 		}
 		if cmd := commandMatch(args.CurrentPacket.Data.Content, "黑名单 (.*?) (\\d)"); len(cmd) > 0 {
 			if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUserID]; !ok {

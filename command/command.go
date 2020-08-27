@@ -6,6 +6,7 @@ import (
 	"github.com/CodFrm/iotqq-plugins/db"
 	"github.com/mzz2017/shadowsocksR/client"
 	pxy "github.com/nadoo/glider/proxy"
+	"github.com/robfig/cron/v3"
 	"net"
 	"time"
 )
@@ -22,6 +23,9 @@ func Init() error {
 	}
 	scenes = db.NewScenes()
 	SignInit()
+	c := cron.New(cron.WithSeconds())
+	c.AddFunc("0 10 8 * * ?", cronGenWordCloud)
+	c.Start()
 	return nil
 }
 
