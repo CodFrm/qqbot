@@ -13,7 +13,7 @@ import (
 )
 
 func GenWordCloud(file string) (string, error) {
-	cmd := exec.Command("python3", "data/tmp/wordcloud.py", file, "data/tmp/tmp.png")
+	cmd := exec.Command("python3", "data/tmp/word_cloud.py", file, "data/tmp/tmp.png")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = os.Stderr
@@ -34,7 +34,7 @@ func cronGenWordCloud() {
 		if !v.IsDir() {
 			s := strings.Split(v.Name(), "_")
 			group := utils.StringToInt(s[0])
-			img, err := GenWordCloud(v.Name())
+			img, err := GenWordCloud("data/group/" + s[0] + time.Now().Add(-time.Hour*24).Format("2006_01_02") + ".txt")
 			if err != nil {
 				println("词云生成失败")
 				continue
