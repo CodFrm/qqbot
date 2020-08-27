@@ -136,7 +136,7 @@ func reconnect() *gosocketio.Client {
 			groupfile[args.CurrentPacket.Data.FromGroupID] = f
 		}
 		if args.CurrentPacket.Data.MsgType == "TextMsg" {
-			f.WriteString(strings.ReplaceAll(args.CurrentPacket.Data.Content, "", "表情") + "\n")
+			f.WriteString(strings.ReplaceAll(args.CurrentPacket.Data.Content, "表情", "") + "\n")
 		}
 		if err := command.IsBlackList(strconv.FormatInt(args.CurrentPacket.Data.FromUserID, 10)); err != nil {
 			return
