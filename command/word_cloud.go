@@ -2,6 +2,7 @@ package command
 
 import (
 	"bytes"
+	"github.com/CodFrm/iotqq-plugins/config"
 	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"io/ioutil"
@@ -34,6 +35,9 @@ func cronGenWordCloud() {
 		if !v.IsDir() {
 			s := strings.Split(v.Name(), "_")
 			group := utils.StringToInt(s[0])
+			if _, ok := config.AppConfig.ManageGroupMap[group]; !ok {
+				continue
+			}
 			img, err := GenWordCloud("data/group/" + s[0] + time.Now().Add(-time.Hour*24).Format("2006_01_02") + ".txt")
 			if err != nil {
 				println("词云生成失败")
