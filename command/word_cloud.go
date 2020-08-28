@@ -38,12 +38,13 @@ func cronGenWordCloud() {
 			if _, ok := config.AppConfig.ManageGroupMap[group]; !ok {
 				continue
 			}
-			img, err := GenWordCloud("data/group/" + s[0] + time.Now().Add(-time.Hour*24).Format("2006_01_02") + ".txt")
+			img, err := GenWordCloud("data/group/" + s[0] + "_" + time.Now().Add(-time.Hour*24).Format("2006_01_02") + ".txt")
 			if err != nil {
 				println("词云生成失败")
 				continue
 			}
 			iotqq.SendPicByBase64(group, 0, "昨日词云", img)
+			os.Remove("data/group/" + s[0] + "_" + time.Now().Add(-time.Hour*24).Format("2006_01_02") + ".txt")
 			time.Sleep(time.Second * 10)
 		}
 	}
