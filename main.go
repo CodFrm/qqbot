@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-var groupfile map[int]*os.File
+var groupfile map[string]*os.File
 
 func main() {
 	if err := config.Init("config.yaml"); err != nil {
@@ -42,7 +42,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	groupfile = make(map[int]*os.File)
+	groupfile = make(map[string]*os.File)
 	os.MkdirAll("data/group", os.ModeDir)
 	c := reconnect()
 	err := c.On(gosocketio.OnDisconnection, func(h *gosocketio.Channel) {
@@ -129,11 +129,11 @@ func reconnect() *gosocketio.Client {
 	}
 	if err := c.On("OnGroupMsgs", func(h *gosocketio.Channel, args iotqq.Message) {
 		//写词日志
-		f, ok := groupfile[args.CurrentPacket.Data.FromGroupID]
+		f, ok := groupfile[strconv.Itoa(args.CurrentPacket.Data.FromGroupID)+"_"+time.Now().Format("2006_01_02")]
 		if !ok {
 			f, err = os.OpenFile("data/group/"+strconv.Itoa(args.CurrentPacket.Data.FromGroupID)+"_"+time.Now().Format("2006_01_02")+".txt",
 				os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
-			groupfile[args.CurrentPacket.Data.FromGroupID] = f
+			groupfile[strconv.Itoa(args.CurrentPacket.Data.FromGroupID)+"_"+time.Now().Format("2006_01_02")] = f
 		}
 		if args.CurrentPacket.Data.MsgType == "TextMsg" {
 			f.WriteString(strings.ReplaceAll(args.CurrentPacket.Data.Content, "表情", "") + "\n")

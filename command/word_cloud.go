@@ -38,6 +38,9 @@ func cronGenWordCloud() {
 			if _, ok := config.AppConfig.ManageGroupMap[group]; !ok {
 				continue
 			}
+			if v.Name() != s[0]+"_"+time.Now().Add(-time.Hour*24).Format("2006_01_02")+".txt" {
+				continue
+			}
 			img, err := GenWordCloud("data/group/" + s[0] + "_" + time.Now().Add(-time.Hour*24).Format("2006_01_02") + ".txt")
 			if err != nil {
 				println("词云生成失败")
