@@ -138,7 +138,7 @@ func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 			if len(ret.Content) < 1 {
 				return msg, nil, nil
 			}
-			newtkl := utils.RegexMatch(ret.Content[0].Tkl, "(\\w+)")
+			newtkl := utils.RegexMatch(ret.Content[0].Tkl, ".(\\w{10,}).")
 			if len(newtkl) == 2 {
 				msg = strings.ReplaceAll(msg, tkl[1], newtkl[1])
 				re := regexp.MustCompile("(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]")

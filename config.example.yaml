@@ -57,4 +57,7 @@ taobao:
   sid: ztksid
   pid: ztkpid
 
+jd:
+  appKey: 123
+
 urlkey: xxxxxx
