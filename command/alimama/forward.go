@@ -30,6 +30,9 @@ func ForwardGroup(args iotqq.Message) bool {
 		if strings.Index(content, "自助") != -1 {
 			return false
 		}
+		if strings.Index(content, "饿了么") != -1 || strings.Index(content, "美团") != -1 {
+			return false
+		}
 		Forward(args)
 		return true
 	}
