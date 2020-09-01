@@ -55,7 +55,7 @@ func dealUniversal(args iotqq.Message) bool {
 			log.Println("退订", err)
 			args.SendMessage("发生了一个系统错误")
 		} else {
-			args.SendMessage(cmd[2] + "退 订 成 功")
+			args.SendMessage(cmd[2] + " 退 订 成 功")
 		}
 		return true
 	} else if _, ok := args.CommandMatch("帮助"); ok {

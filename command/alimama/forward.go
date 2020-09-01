@@ -8,6 +8,7 @@ import (
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -26,6 +27,9 @@ func ForwardGroup(args iotqq.Message) bool {
 		return false
 	}
 	if tkl := utils.RegexMatch(content, "[$￥](\\w{10,})[$￥]"); len(tkl) > 0 {
+		if strings.Index(content, "自助") != -1 {
+			return false
+		}
 		Forward(args)
 		return true
 	}
@@ -79,7 +83,7 @@ func Forward(args iotqq.Message) error {
 		if err != nil && err.Error() != "很抱歉！商品ID解析错误！！！" {
 			return err
 		}
-		if err == nil && IsTklSend(tkl) {
+		if tkl != nil && IsTklSend(tkl) {
 			return errors.New("重复发送")
 		}
 		for _, v := range list {
@@ -99,7 +103,7 @@ func Forward(args iotqq.Message) error {
 		if err != nil && err.Error() != "很抱歉！商品ID解析错误！！！" {
 			return err
 		}
-		if err == nil && IsTklSend(tkl) {
+		if tkl != nil && IsTklSend(tkl) {
 			return errors.New("重复发送")
 		}
 		url := ""
