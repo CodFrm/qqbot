@@ -22,10 +22,6 @@ func ForwardGroup(args iotqq.Message) bool {
 		return false
 	}
 	//匹配淘口令发送
-	tkl := utils.RegexMatch(content, ".(\\w{10,}).")
-	if len(tkl) < 2 {
-		return false
-	}
 	if tkl := utils.RegexMatch(content, "[$￥](\\w{10,})[$￥]"); len(tkl) > 0 {
 		if strings.Index(content, "自助") != -1 {
 			return false
