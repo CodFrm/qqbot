@@ -116,6 +116,9 @@ type PicMsgContent struct {
 	FriendPic []struct {
 		Url string `json:"Url"`
 	} `json:"FriendPic"`
+	GroupPic []struct {
+		Url string `json:"Url"`
+	} `json:"GroupPic"`
 }
 
 type Message struct {
@@ -636,5 +639,13 @@ func (m *Message) GetQQ() int64 {
 		return m.CurrentPacket.Data.FromUin
 	} else {
 		return m.CurrentPacket.Data.FromUserID
+	}
+}
+
+func (m *Message) Err(err error) {
+	if err == nil {
+		m.SendMessage("OK")
+	} else {
+		m.SendMessage(err.Error())
 	}
 }

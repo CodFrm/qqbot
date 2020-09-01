@@ -191,6 +191,9 @@ func reconnect() *gosocketio.Client {
 			return
 		}
 		if _, ok := config.AppConfig.FeatureMap["alimama"]; ok {
+			if ok := alimama.ForwardGroup(args); ok {
+				return
+			}
 			if _, ok := args.CommandMatch("^外卖 帮助$"); ok {
 				args.SendMessage("【活动链接】https://sourl.cn/FhPLTD\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看\n" +
 					"美团可使用此链接:https://sourl.cn/Kvz8Hk\n" +

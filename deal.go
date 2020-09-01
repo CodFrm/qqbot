@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"github.com/CodFrm/iotqq-plugins/command/alimama"
+	"github.com/CodFrm/iotqq-plugins/config"
+	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"log"
 )
@@ -45,7 +47,7 @@ func dealUniversal(args iotqq.Message) bool {
 			log.Println("订阅", err)
 			args.SendMessage("发生了一个系统错误")
 		} else {
-			args.SendMessage("订 阅 成 功")
+			args.SendMessage(cmd[2] + " 订 阅 成 功")
 		}
 		return true
 	} else if cmd, ok := args.CommandMatch("退订(\\s|)(.*?)($|\")"); ok && !args.Self() {
@@ -53,7 +55,7 @@ func dealUniversal(args iotqq.Message) bool {
 			log.Println("退订", err)
 			args.SendMessage("发生了一个系统错误")
 		} else {
-			args.SendMessage("退 订 成 功")
+			args.SendMessage(cmd[2] + "退 订 成 功")
 		}
 		return true
 	} else if _, ok := args.CommandMatch("帮助"); ok {
@@ -61,6 +63,22 @@ func dealUniversal(args iotqq.Message) bool {
 			"2.淘口令转换,触发指令:'淘[淘宝口令]',可获取内部优惠券和优惠口令\n" +
 			"3.订阅商品,触发指令:'订阅[关键字]',订阅指定的商品,如果有活动会直接私聊推送给你哦\n" +
 			"饿了么每日红包:$nH3n1zNqDip$")
+		return true
+	}
+	//管理员命令
+	if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; !ok {
+		return false
+	}
+	if cmd, ok := args.CommandMatch("^(开启|关闭)转发$"); ok {
+		args.Err(alimama.EnableGroupForward(cmd[1] == "开启"))
+		return true
+	} else if cmd, ok := args.CommandMatch("^(添加|删除)转发群(\\d+)$"); ok {
+		group := utils.StringToInt(cmd[2])
+		if cmd[1] == "添加" {
+			args.Err(alimama.AddForwardGroup(group))
+		} else {
+			args.Err(alimama.RemoveForwardGroup(group))
+		}
 		return true
 	}
 	return false

@@ -1,8 +1,6 @@
 package alimama
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/CodFrm/iotqq-plugins/config"
 	"github.com/CodFrm/iotqq-plugins/db"
@@ -70,64 +68,6 @@ func AddGroup(qqgroup string, rm bool) error {
 		return db.Redis.SRem("alimama:group:list", qqgroup).Err()
 	}
 	return db.Redis.SAdd("alimama:group:list", qqgroup).Err()
-}
-
-func Forward(args iotqq.Message) error {
-	if args.CurrentPacket.Data.Content[:4] == "转 " {
-		args.CurrentPacket.Data.Content = args.CurrentPacket.Data.Content[4:]
-	}
-	//非图片,直接转发
-	list, err := db.Redis.SMembers("alimama:group:list").Result()
-	if err != nil {
-		return err
-	}
-	//单独的口令
-	cmd := utils.RegexMatch(args.CurrentPacket.Data.Content, "^.(\\w{10,}).$")
-	if len(cmd) > 0 {
-		_, tkl, err := DealTkl(args.CurrentPacket.Data.Content)
-		if err != nil {
-			return err
-		}
-		url := tkl.Content[0].PictURL
-		content := tkl.Content[0].TaoTitle + " " + tkl.Content[0].QuanhouJiage + "￥" + "\n" + tkl.Content[0].Tkl
-		for _, v := range list {
-			if url == "" {
-				iotqq.QueueSendMsg(utils.StringToInt(v), 0, content)
-			} else {
-				iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, content, url)
-			}
-		}
-		mq.publisher(content)
-		return nil
-	}
-	if args.CurrentPacket.Data.MsgType == "TextMsg" {
-		args.CurrentPacket.Data.Content, _, err = DealTkl(args.CurrentPacket.Data.Content)
-		if err != nil && err.Error() != "很抱歉！商品ID解析错误！！！" {
-			return err
-		}
-		for _, v := range list {
-			iotqq.QueueSendMsg(utils.StringToInt(v), 0, args.CurrentPacket.Data.Content)
-		}
-		mq.publisher(args.CurrentPacket.Data.Content)
-		return nil
-	} else if args.CurrentPacket.Data.MsgType == "PicMsg" {
-		pic := &iotqq.PicMsgContent{}
-		if err := json.Unmarshal([]byte(args.CurrentPacket.Data.Content), pic); err != nil {
-			return err
-		}
-		var err error
-		//处理口令
-		pic.Content, _, err = DealTkl(pic.Content)
-		if err != nil && err.Error() != "很抱歉！商品ID解析错误！！！" {
-			return err
-		}
-		for _, v := range list {
-			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, pic.Content, pic.FriendPic[0].Url)
-		}
-		mq.publisher(pic.Content)
-		return nil
-	}
-	return errors.New("不支持的类型")
 }
 
 func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
