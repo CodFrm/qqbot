@@ -123,7 +123,7 @@ func reconnect() *gosocketio.Client {
 		} else if n < 5 {
 			msg += "!"
 		}
-		args.SendMessage(msg)
+		args.SendMessage(msg + "(来自人工智能的回复)")
 	}); err != nil {
 		log.Fatal(err)
 	}

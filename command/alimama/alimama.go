@@ -6,6 +6,7 @@ import (
 	"github.com/CodFrm/iotqq-plugins/db"
 	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
+	"github.com/CodFrm/iotqq-plugins/utils/jdunion"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
 	"regexp"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 )
 
 var tb *taobaoopen.Taobao
+var jd *jdunion.JdUnion
 var mq *broker
 
 func Init() error {
@@ -24,6 +26,7 @@ func Init() error {
 	//c.AddFunc("0 30 10 * * ?", notice("夜宵时间,来撸串"))
 	//c.Start()
 	tb = taobaoopen.NewTaobao(config.AppConfig.Taobao)
+	//jd = jdunion.NewJdUnion(config.AppConfig.Jd)
 	mq = NewBroker()
 	//初始化mq订阅
 	mlist, err := db.Redis.HGetAll("alimama:subscribe:list").Result()

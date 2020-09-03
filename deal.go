@@ -22,7 +22,7 @@ func dealUniversal(args iotqq.Message) bool {
 			log.Println("有无", err)
 			args.SendMessage("发生了一个系统错误")
 		} else {
-			args.SendMessage(str + "\n加群获取更多资讯,1131503629")
+			args.SendMessage(str + "\n另可以发送'订阅" + cmd[1] + "'来关注本类商品哦\n加群获取更多资讯,1131503629")
 		}
 		return true
 	} else if _, ok := args.CommandMatch(".\\w{10,}."); ok && args.CurrentPacket.Data.Content[:3] == "淘" {

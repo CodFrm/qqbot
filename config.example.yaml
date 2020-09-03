@@ -59,5 +59,7 @@ taobao:
 
 jd:
   appKey: 123
+  appSecret: 456
+  siteId: 789
 
 urlkey: xxxxxx

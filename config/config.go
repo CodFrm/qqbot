@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/CodFrm/iotqq-plugins/utils/jdunion"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -25,6 +26,7 @@ type Config struct {
 	Feature        []string
 	FeatureMap     map[string]struct{}
 	Taobao         taobaoopen.TaobaoConfig
+	Jd             jdunion.JdConfig
 	Urlkey         string
 }
 
