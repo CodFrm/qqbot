@@ -101,7 +101,7 @@ type Data struct {
 	FromGroupName string      `json:"FromGroupName"`
 	FromNickName  string      `json:"FromNickName"`
 	FromUserID    int64       `json:"FromUserId"`
-	MsgRandom     int         `json:"MsgRandom"`
+	MsgRandom     int64       `json:"MsgRandom"`
 	MsgSeq        int         `json:"MsgSeq"`
 	MsgTime       int         `json:"MsgTime"`
 	MsgType       string      `json:"MsgType"`
@@ -456,7 +456,7 @@ func SendPrivateMsg(group int, qq int64, Content string) (string, error) {
 	return string(body), nil
 }
 
-func RevokeMsg(qqgroup int, MsgSeq int, MsgRandom int) (string, error) {
+func RevokeMsg(qqgroup int, MsgSeq int, MsgRandom int64) (string, error) {
 	tmp := make(map[string]interface{})
 	tmp["GroupID"] = qqgroup
 	tmp["MsgSeq"] = MsgSeq

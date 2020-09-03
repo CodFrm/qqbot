@@ -18,16 +18,25 @@ func ForwardGroup(args iotqq.Message) bool {
 	if result, _ := db.Redis.Get("alimama:group:forward:enable").Result(); result != "1" {
 		return false
 	}
+	if args.CurrentPacket.Data.FromGroupID == 221688582 {
+		println("开启检查OK")
+	}
 	if val, _ := db.Redis.HGet("alimama:forward:group", strconv.Itoa(group)).Result(); val != "1" {
 		return false
 	}
+	if args.CurrentPacket.Data.FromGroupID == 221688582 {
+		println("群检查OK")
+	}
 	//匹配淘口令发送
 	if tkl := utils.RegexMatch(content, "[$￥](\\w{10,})[$￥]"); len(tkl) > 0 {
-		if strings.Index(content, "自助") != -1 {
+		if strings.Index(content, "自助") != -1 || strings.Index(content, "网站") != -1 {
 			return false
 		}
 		if strings.Index(content, "饿了么") != -1 || strings.Index(content, "美团") != -1 {
 			return false
+		}
+		if args.CurrentPacket.Data.FromGroupID == 221688582 {
+			println("口令检查OK")
 		}
 		if err := Forward(args); err != nil {
 			println(err.Error())
