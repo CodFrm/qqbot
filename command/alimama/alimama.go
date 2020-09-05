@@ -8,6 +8,7 @@ import (
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"github.com/CodFrm/iotqq-plugins/utils/jdunion"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -133,8 +134,8 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 			if err != nil || tkl == "" {
 				tkl = v.CouponShareUrl
 			}
-			//ret += "价格:" + v.ZkFinalPrice + "￥ " + utils.ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
-			ret += "价格:" + v.ZkFinalPrice + "￥ " + tkl + "\n"
+			ret += "价格:" + v.ZkFinalPrice + "￥ " + utils.ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
+			//ret += "价格:" + v.ZkFinalPrice + "￥ " + tkl + "\n"
 		} else {
 			coupon_start_fee, _ := strconv.ParseFloat(v.CouponStartFee, 64)
 			zk_final_price, _ := strconv.ParseFloat(v.ZkFinalPrice, 64)
@@ -144,16 +145,16 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 				if err != nil || tkl == "" {
 					tkl = v.CouponShareUrl
 				}
-				//ret += "原价:" + v.ZkFinalPrice + "￥ 券后价:" + strconv.FormatFloat(zk_final_price-coupon_amount, 'G', 5, 64) + "￥ " + utils.ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
-				ret += "原价:" + v.ZkFinalPrice + "￥ 券后价:" + strconv.FormatFloat(zk_final_price-coupon_amount, 'G', 5, 64) + "￥ " +
-					tkl + "\n"
+				ret += "原价:" + v.ZkFinalPrice + "￥ 券后价:" + strconv.FormatFloat(zk_final_price-coupon_amount, 'G', 5, 64) + "￥ " + utils.ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
+				//ret += "原价:" + v.ZkFinalPrice + "￥ 券后价:" + strconv.FormatFloat(zk_final_price-coupon_amount, 'G', 5, 64) + "￥ " +
+				//	tkl + "\n"
 			} else {
 				tkl, err := tb.CreateTpwd(v.ShortTitle, "https:"+v.Url)
 				if err != nil || tkl == "" {
 					tkl = v.Url
 				}
-				//ret += "价格:" + v.ZkFinalPrice + "￥ " + utils.ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
-				ret += "价格:" + v.ZkFinalPrice + "￥ " + tkl + "\n"
+				ret += "价格:" + v.ZkFinalPrice + "￥ " + utils.ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
+				//ret += "价格:" + v.ZkFinalPrice + "￥ " + tkl + "\n"
 			}
 		}
 	}

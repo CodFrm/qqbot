@@ -35,7 +35,8 @@ type SpreadItem struct {
 type TpwdRespond struct {
 	Respond struct {
 		Data struct {
-			Model string `json:"model"`
+			Model          string `json:"model"`
+			PasswordSimple string `json:"password_simple"`
 		} `json:"data"`
 	} `json:"tbk_tpwd_create_response"`
 }

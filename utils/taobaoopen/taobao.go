@@ -105,7 +105,7 @@ func (t *Taobao) CreateTpwd(text string, url string) (string, error) {
 	if err := json.Unmarshal([]byte(str), &ret); err != nil {
 		return "", err
 	}
-	return ret.Respond.Data.Model, nil
+	return ret.Respond.Data.PasswordSimple, nil
 }
 
 type spreadRequests struct {
