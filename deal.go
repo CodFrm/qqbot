@@ -37,7 +37,7 @@ func dealUniversal(args iotqq.Message) bool {
 		} else if tkl == nil {
 			args.SendMessage("没有发现淘口令")
 		} else {
-			args.SendMessage(ret + "\n" + tkl.Content[0].QuanhouJiage + "￥ 使用新的口令预计可反" + alimama.DealFl(tkl.Content[0].Tkfee3) + "￥")
+			args.SendMessage(ret + "\n" + tkl.Content[0].QuanhouJiage + "￥ " + tkl.Content[0].Shorturl + " 使用新的口令预计可反" + alimama.DealFl(tkl.Content[0].Tkfee3) + "￥")
 		}
 		return true
 	} else if _, ok := args.CommandMatch("绑定(\\s|)(\\d+)($|\")"); ok {
