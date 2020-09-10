@@ -133,7 +133,25 @@ func (t *Taobao) GetSpread(url []string) ([]*SpreadItem, error) {
 // http://www.zhetaoke.com/user/open/open_gaoyongzhuanlian_tkl.aspx
 func (t *Taobao) ConversionTkl(tkl string) (*ConverseTkl, error) {
 	resp, err := HttpGet("https://api.zhetaoke.com:10001/api/open_gaoyongzhuanlian_tkl.ashx?appkey="+
-		t.ZtkAppKey+"&sid="+t.Sid+"&pid="+t.Pid+"&tkl="+tkl+"&signurl=5", nil)
+		t.ZtkAppKey+"&sid="+t.Sid+"&pid="+t.Pid+"&tkl="+url.QueryEscape(tkl)+"&signurl=5", nil)
+	if err != nil {
+		return nil, err
+	}
+	ret := &ConverseTkl{}
+	if err := json.Unmarshal(resp, ret); err != nil {
+		retErr := &ZtkError{}
+		if err := json.Unmarshal(resp, retErr); err != nil {
+			return nil, err
+		}
+		return nil, retErr
+	}
+	return ret, nil
+}
+
+//http://www.zhetaoke.com/user/open/open_gaoyongzhuanlian.aspx
+func (t *Taobao) ConversionShopId(id string) (*ConverseTkl, error) {
+	resp, err := HttpGet("https://api.zhetaoke.com:10001/api/open_gaoyongzhuanlian.ashx?appkey="+
+		t.ZtkAppKey+"&sid="+t.Sid+"&pid="+t.Pid+"&num_iid="+url.QueryEscape(id)+"&signurl=5", nil)
 	if err != nil {
 		return nil, err
 	}

@@ -26,7 +26,7 @@ func dealUniversal(args iotqq.Message) bool {
 			args.SendMessage(str + "\n另可以发送'订阅" + cmd[1] + "'来关注本类商品哦\n加群获取更多资讯,1131503629")
 		}
 		return true
-	} else if _, ok := args.CommandMatch("(.(\\w{10,}).)|(.*?\\.jd\\.com\\/)"); ok {
+	} else if _, ok := args.CommandMatch("([$￥€](\\w{10,})[$￥€])|(.*?\\.jd\\.com\\/)|(.*?\\.(taobao|tmall)\\.com/)"); ok {
 		var ret string
 		var tkl *taobaoopen.ConverseTkl
 		var err error
@@ -44,8 +44,10 @@ func dealUniversal(args iotqq.Message) bool {
 			args.SendMessage("发生了一个系统错误")
 		} else if tkl == nil {
 			args.SendMessage("没有发现淘口令")
+		} else if tkl.Content[0].Shorturl == "" {
+			args.SendMessage("此商品不支持,无法转链")
 		} else {
-			args.SendMessage(ret + "\n" + tkl.Content[0].QuanhouJiage + "￥ " + tkl.Content[0].Shorturl + " 使用新的口令预计可反" + alimama.DealFl(tkl.Content[0].Tkfee3) + "￥")
+			args.SendMessage(ret + "\n" + tkl.Content[0].QuanhouJiage + "￥ " + tkl.Content[0].Shorturl + " 使用新的口令预计可f" + alimama.DealFl(tkl.Content[0].Tkfee3) + "￥")
 		}
 		return true
 	} else if _, ok := args.CommandMatch("绑定(\\s|)(\\d+)($|\")"); ok {

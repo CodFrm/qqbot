@@ -77,7 +77,7 @@ func AddGroup(qqgroup string, rm bool) error {
 }
 
 func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
-	if tkl := utils.RegexMatch(msg, ".(\\w{10,})."); len(tkl) >= 2 {
+	if tkl := utils.RegexMatch(msg, "[$￥€](\\w{10,})[$￥€]"); len(tkl) >= 2 {
 		if ret, err := tbfl.ConversionTkl(tkl[1]); err != nil {
 			return msg, nil, err
 		} else {
@@ -94,11 +94,37 @@ func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 			return msg, nil, nil
 		}
 	}
-	//处理京东链接
+	//处理淘宝链接
+	links := utils.RegexMatchs(msg, "http[s]://[\\w-]+\\.((taobao|tmall).com)[_:\\.\\/\\w\\?=&%]+")
 	retTkl := &taobaoopen.ConverseTkl{
 		Content: make([]taobaoopen.ConverseTklContent, 0),
 	}
-	for _, v := range utils.RegexMatchs(msg, "http[s]://[\\w-]+\\.(jd.com)[\\/\\w\\?=&%]+") {
+	if len(links) > 0 {
+		for _, v := range links {
+			id := utils.RegexMatch(v[0], "(\\?|&)id=(.*?)(&|$)")
+			if len(id) == 0 {
+				continue
+			}
+			if ret, err := tbfl.ConversionShopId(id[2]); err != nil {
+				continue
+			} else {
+				if len(ret.Content) < 1 {
+					continue
+				}
+				newtkl := utils.RegexMatch(ret.Content[0].Tkl, ".(\\w{10,}).")
+				if len(newtkl) == 2 {
+					msg = strings.ReplaceAll(msg, v[0], ret.Content[0].Shorturl)
+					retTkl = ret
+				}
+			}
+		}
+		if len(retTkl.Content) == 0 {
+			retTkl.Content = append(retTkl.Content, taobaoopen.ConverseTklContent{})
+		}
+		return msg, retTkl, nil
+	}
+	//处理京东链接
+	for _, v := range utils.RegexMatchs(msg, "http[s]://[\\w-]+\\.(jd.com)[\\.\\/\\w\\?=&%]+") {
 		ret, err := jd.ConversionLink(v[0])
 		if err != nil {
 			continue
@@ -112,10 +138,10 @@ func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 			})
 		}
 	}
-	if len(retTkl.Content) > 0 && retTkl.Content[0].TaoID != "" {
-		return msg, retTkl, nil
+	if len(retTkl.Content) == 0 {
+		retTkl.Content = append(retTkl.Content, taobaoopen.ConverseTklContent{})
 	}
-	return msg, nil, nil
+	return msg, retTkl, nil
 }
 
 func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
