@@ -22,7 +22,7 @@ func ForwardGroup(args iotqq.Message) bool {
 		return false
 	}
 	//匹配淘口令发送
-	if tkl := utils.RegexMatch(content, "([\\$￥€¢₴₳](\\w{10,})[\\$￥€¢₴₳])|(.*?\\.jd\\.com\\/)"); len(tkl) > 0 {
+	if tkl := utils.RegexMatch(content, "([\\p{Sc}](\\w{8,12})[\\p{Sc}])|(.*?\\.jd\\.com\\/)"); len(tkl) > 0 {
 		if strings.Index(content, "自助") != -1 || strings.Index(content, "网站") != -1 {
 			return false
 		}
@@ -60,7 +60,7 @@ func Forward(args iotqq.Message) error {
 		return err
 	}
 	//单独的口令
-	cmd := utils.RegexMatch(args.CurrentPacket.Data.Content, "^.(\\w{10,}).$")
+	cmd := utils.RegexMatch(args.CurrentPacket.Data.Content, "^[\\p{Sc}](\\w{8,12})[\\p{Sc}]$")
 	if len(cmd) > 0 {
 		_, tkl, err := DealTkl(args.CurrentPacket.Data.Content)
 		if err != nil {

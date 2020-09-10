@@ -26,7 +26,7 @@ func dealUniversal(args iotqq.Message) bool {
 			args.SendMessage(str + "\n另可以发送'订阅" + cmd[1] + "'来关注本类商品哦\n加群获取更多资讯,1131503629")
 		}
 		return true
-	} else if _, ok := args.CommandMatch("([\\$￥€¢₴₳](\\w{10,})[\\$￥€¢₴₳])|(.*?\\.jd\\.com\\/)|(.*?\\.(taobao|tmall)\\.com\\/)"); ok {
+	} else if _, ok := args.CommandMatch("([\\p{Sc}](\\w{8,12})[\\p{Sc}])|(.*?\\.jd\\.com\\/)|(.*?\\.(taobao|tmall)\\.com\\/)"); ok {
 		var ret string
 		var tkl *taobaoopen.ConverseTkl
 		var err error

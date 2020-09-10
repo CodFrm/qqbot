@@ -77,14 +77,14 @@ func AddGroup(qqgroup string, rm bool) error {
 }
 
 func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
-	if tkl := utils.RegexMatch(msg, "[\\$￥€¢₴₳](\\w{10,})[\\$￥€¢₴₳]"); len(tkl) >= 2 {
+	if tkl := utils.RegexMatch(msg, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]"); len(tkl) >= 2 {
 		if ret, err := tbfl.ConversionTkl(tkl[1]); err != nil {
 			return msg, nil, err
 		} else {
 			if len(ret.Content) < 1 {
 				return msg, nil, nil
 			}
-			newtkl := utils.RegexMatch(ret.Content[0].Tkl, ".(\\w{10,}).")
+			newtkl := utils.RegexMatch(ret.Content[0].Tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
 			if len(newtkl) == 2 {
 				msg = strings.ReplaceAll(msg, tkl[1], newtkl[1])
 				re := regexp.MustCompile("(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]")
@@ -111,7 +111,7 @@ func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 				if len(ret.Content) < 1 {
 					continue
 				}
-				newtkl := utils.RegexMatch(ret.Content[0].Tkl, ".(\\w{10,}).")
+				newtkl := utils.RegexMatch(ret.Content[0].Tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
 				if len(newtkl) == 2 {
 					msg = strings.ReplaceAll(msg, v[0], ret.Content[0].Shorturl)
 					retTkl = ret
@@ -145,14 +145,14 @@ func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 }
 
 func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
-	if tkl := utils.RegexMatch(msg, "[\\$￥€¢₴₳](\\w{10,})[\\$￥€¢₴₳]"); len(tkl) >= 2 {
+	if tkl := utils.RegexMatch(msg, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]"); len(tkl) >= 2 {
 		if ret, err := tb.ConversionTkl(tkl[1]); err != nil {
 			return msg, nil, err
 		} else {
 			if len(ret.Content) < 1 {
 				return msg, nil, nil
 			}
-			newtkl := utils.RegexMatch(ret.Content[0].Tkl, ".(\\w{10,}).")
+			newtkl := utils.RegexMatch(ret.Content[0].Tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
 			if len(newtkl) == 2 {
 				msg = strings.ReplaceAll(msg, tkl[1], newtkl[1])
 				re := regexp.MustCompile("(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]")
