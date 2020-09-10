@@ -26,7 +26,7 @@ type Config struct {
 	Feature        []string
 	FeatureMap     map[string]struct{}
 	Taobao         taobaoopen.TaobaoConfig
-	Jd             jdunion.JdConfig
+	Jd             jdunion.JdUnion
 	Urlkey         string
 }
 

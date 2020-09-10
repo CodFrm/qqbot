@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/CodFrm/iotqq-plugins/utils"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -15,17 +16,15 @@ import (
 )
 
 type JdUnion struct {
-	AppKey    string
-	AppSecret string
-	SiteId    string
+	AppKey    string `yaml:"appKey"`
+	AppSecret string `yaml:"appSecret"`
+	SiteId    string `yaml:"siteId"`
+	XlAppKey  string `yaml:"xlAppKey"`
+	JdId      string `yaml:"jdId"`
 }
 
-func NewJdUnion(config JdConfig) *JdUnion {
-	return &JdUnion{
-		AppSecret: config.AppSecret,
-		AppKey:    config.AppKey,
-		SiteId:    config.SiteId,
-	}
+func NewJdUnion(config JdUnion) *JdUnion {
+	return &config
 }
 
 type GetPromotionLinkRespond struct {
@@ -45,6 +44,28 @@ func (jd *JdUnion) GetPromotionLink(materialId string) (*PromotionLink, error) {
 	ret, err := jd.PublicFunc("jd.union.open.promotion.common.get", &Kv{
 		Key:   "param_json",
 		Value: fmt.Sprintf(`{"promotionCodeReq":{"siteId":"%s","materialId":"%s"}}`, jd.SiteId, materialId),
+	})
+	if err != nil {
+		return nil, err
+	}
+	respond := &GetPromotionLinkRespond{}
+	if err := json.Unmarshal([]byte(ret), respond); err != nil {
+		return nil, err
+	}
+	retJson := &PromotionLink{}
+	if err := json.Unmarshal([]byte(respond.JdUnionOpenPromotionCommonGetResponse.Result), retJson); err != nil {
+		return nil, err
+	}
+	if retJson.Code != 0 {
+		return nil, errors.New(retJson.Message)
+	}
+	return retJson, nil
+}
+
+func (jd *JdUnion) PromotionGoodsInfo(skuIds string) (*PromotionLink, error) {
+	ret, err := jd.PublicFunc("jd.union.open.goods.promotiongoodsinfo.query", &Kv{
+		Key:   "param_json",
+		Value: fmt.Sprintf(`{"skuIds":"%s"}`, skuIds),
 	})
 	if err != nil {
 		return nil, err
@@ -105,4 +126,26 @@ func (jd *JdUnion) request(param []*Kv) (string, error) {
 		return "", err
 	}
 	return string(body), nil
+}
+
+type Link struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Data struct {
+		ClickURL string `json:"clickURL"`
+		ShortURL string `json:"shortURL"`
+	} `json:"data"`
+}
+
+func (jd *JdUnion) ConversionLink(url string) (*Link, error) {
+	data, err := utils.HttpGet("https://openapi.linkstars.com/api/changeurl_jd?apikey="+jd.XlAppKey+"&v=1.0.0&unionid="+jd.JdId+
+		"&materialId="+url, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	ret := &Link{}
+	if err := json.Unmarshal(data, ret); err != nil {
+		return nil, err
+	}
+	return ret, nil
 }

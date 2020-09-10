@@ -61,5 +61,7 @@ jd:
   appKey: 123
   appSecret: 456
   siteId: 789
+  xlAppKey: xl.linkstars.com appkey
+  jdId: 京东联盟id
 
 urlkey: xxxxxx

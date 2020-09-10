@@ -2,12 +2,6 @@ package jdunion
 
 import "strings"
 
-type JdConfig struct {
-	AppKey    string `yaml:"appKey"`
-	AppSecret string `yaml:"appSecret"`
-	SiteId    string `yaml:"siteId"`
-}
-
 type Kv struct {
 	Key   string
 	Value string

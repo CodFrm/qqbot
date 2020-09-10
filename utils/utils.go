@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"github.com/CodFrm/iotqq-plugins/config"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -15,7 +14,6 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"regexp"
 	"strconv"
@@ -153,10 +151,7 @@ func RegexMatch(content string, command string) []string {
 	return reg.FindStringSubmatch(content)
 }
 
-func ShortUrl(u string) string {
-	resp, err := HttpGet("http://api.suolink.cn/api.htm?domain=m6z.cn&url="+url.QueryEscape(u)+"&key="+config.AppConfig.Urlkey, nil, nil)
-	if err != nil {
-		return u
-	}
-	return string(resp)
+func RegexMatchs(content string, command string) [][]string {
+	reg := regexp.MustCompile(command)
+	return reg.FindAllStringSubmatch(content, -1)
 }

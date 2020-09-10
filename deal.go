@@ -25,7 +25,7 @@ func dealUniversal(args iotqq.Message) bool {
 			args.SendMessage(str + "\n另可以发送'订阅" + cmd[1] + "'来关注本类商品哦\n加群获取更多资讯,1131503629")
 		}
 		return true
-	} else if _, ok := args.CommandMatch(".\\w{10,}."); ok && args.CurrentPacket.Data.Content[:3] == "淘" {
+	} else if _, ok := args.CommandMatch("(.(\\w{10,}).)|(.*?\\.jd\\.com\\/)"); ok && args.CurrentPacket.Data.Content[:3] == "淘" {
 		ret, tkl, err := alimama.DealTkl(args.CurrentPacket.Data.Content[3:])
 		if err != nil {
 			if err.Error() == "很抱歉！商品ID解析错误！！！" {
