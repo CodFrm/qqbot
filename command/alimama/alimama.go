@@ -17,6 +17,7 @@ import (
 var tb *taobaoopen.Taobao
 var jd *jdunion.JdUnion
 var mq *broker
+var tbfl *taobaoopen.Taobao
 
 func Init() error {
 	//c := cron.New(cron.WithSeconds())
@@ -27,6 +28,7 @@ func Init() error {
 	//c.AddFunc("0 30 10 * * ?", notice("夜宵时间,来撸串"))
 	//c.Start()
 	tb = taobaoopen.NewTaobao(config.AppConfig.Taobao)
+	tbfl = taobaoopen.NewTaobao(config.AppConfig.TaobaoFl)
 	jd = jdunion.NewJdUnion(config.AppConfig.Jd)
 	mq = NewBroker()
 	//初始化mq订阅
@@ -72,6 +74,48 @@ func AddGroup(qqgroup string, rm bool) error {
 		return db.Redis.SRem("alimama:group:list", qqgroup).Err()
 	}
 	return db.Redis.SAdd("alimama:group:list", qqgroup).Err()
+}
+
+func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
+	if tkl := utils.RegexMatch(msg, ".(\\w{10,})."); len(tkl) >= 2 {
+		if ret, err := tbfl.ConversionTkl(tkl[1]); err != nil {
+			return msg, nil, err
+		} else {
+			if len(ret.Content) < 1 {
+				return msg, nil, nil
+			}
+			newtkl := utils.RegexMatch(ret.Content[0].Tkl, ".(\\w{10,}).")
+			if len(newtkl) == 2 {
+				msg = strings.ReplaceAll(msg, tkl[1], newtkl[1])
+				re := regexp.MustCompile("(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]")
+				msg = re.ReplaceAllString(msg, ret.Content[0].Shorturl)
+				return msg, ret, nil
+			}
+			return msg, nil, nil
+		}
+	}
+	//处理京东链接
+	retTkl := &taobaoopen.ConverseTkl{
+		Content: make([]taobaoopen.ConverseTklContent, 0),
+	}
+	for _, v := range utils.RegexMatchs(msg, "http[s]://[\\w-]+\\.(jd.com)[\\/\\w\\?=&%]+") {
+		ret, err := jd.ConversionLink(v[0])
+		if err != nil {
+			continue
+		}
+		msg = strings.ReplaceAll(msg, v[0], ret.Data.ShortURL)
+		ids := utils.RegexMatch(ret.Data.ClickURL, "e=(.*?)&")
+		if len(ids) > 0 {
+			retTkl.Content = append(retTkl.Content, taobaoopen.ConverseTklContent{
+				TaoID:    ids[1],
+				Shorturl: ret.Data.ShortURL,
+			})
+		}
+	}
+	if len(retTkl.Content) > 0 && retTkl.Content[0].TaoID != "" {
+		return msg, retTkl, nil
+	}
+	return msg, nil, nil
 }
 
 func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
@@ -121,7 +165,7 @@ func DealFl(fl string) string {
 	if err != nil {
 		return "0"
 	}
-	ret = ret * 0.7
+	ret = ret * 0.55
 	return fmt.Sprintf("%.2f", ret)
 }
 

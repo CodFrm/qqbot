@@ -26,6 +26,7 @@ type Config struct {
 	Feature        []string
 	FeatureMap     map[string]struct{}
 	Taobao         taobaoopen.TaobaoConfig
+	TaobaoFl       taobaoopen.TaobaoConfig `yaml:"taobao-fl"`
 	Jd             jdunion.JdUnion
 	Urlkey         string
 }

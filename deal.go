@@ -6,6 +6,7 @@ import (
 	"github.com/CodFrm/iotqq-plugins/config"
 	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
+	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
 	"log"
 )
 
@@ -25,8 +26,15 @@ func dealUniversal(args iotqq.Message) bool {
 			args.SendMessage(str + "\n另可以发送'订阅" + cmd[1] + "'来关注本类商品哦\n加群获取更多资讯,1131503629")
 		}
 		return true
-	} else if _, ok := args.CommandMatch("(.(\\w{10,}).)|(.*?\\.jd\\.com\\/)"); ok && args.CurrentPacket.Data.Content[:3] == "淘" {
-		ret, tkl, err := alimama.DealTkl(args.CurrentPacket.Data.Content[3:])
+	} else if _, ok := args.CommandMatch("(.(\\w{10,}).)|(.*?\\.jd\\.com\\/)"); ok {
+		var ret string
+		var tkl *taobaoopen.ConverseTkl
+		var err error
+		if args.CurrentPacket.Data.Content[:3] == "淘" {
+			ret, tkl, err = alimama.DealTklFl(args.CurrentPacket.Data.Content[3:])
+		} else {
+			ret, tkl, err = alimama.DealTklFl(args.CurrentPacket.Data.Content)
+		}
 		if err != nil {
 			if err.Error() == "很抱歉！商品ID解析错误！！！" {
 				args.SendMessage("此商品不支持,无法转链")
