@@ -77,7 +77,7 @@ func AddGroup(qqgroup string, rm bool) error {
 }
 
 func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
-	if tkl := utils.RegexMatch(msg, "[$￥€](\\w{10,})[$￥€]"); len(tkl) >= 2 {
+	if tkl := utils.RegexMatch(msg, "[\\$￥€¢](\\w{10,})[\\$￥€¢]"); len(tkl) >= 2 {
 		if ret, err := tbfl.ConversionTkl(tkl[1]); err != nil {
 			return msg, nil, err
 		} else {
@@ -145,7 +145,7 @@ func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 }
 
 func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
-	if tkl := utils.RegexMatch(msg, "[$￥€](\\w{10,})[$￥€]"); len(tkl) >= 2 {
+	if tkl := utils.RegexMatch(msg, "[\\$￥€¢](\\w{10,})[\\$￥€¢]"); len(tkl) >= 2 {
 		if ret, err := tb.ConversionTkl(tkl[1]); err != nil {
 			return msg, nil, err
 		} else {
