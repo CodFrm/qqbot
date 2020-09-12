@@ -107,23 +107,25 @@ func reconnect() *gosocketio.Client {
 				return
 			}
 		}
-		if args.Self() {
-			return
-		}
-		msg := ""
-		n := 1 + rand.Intn(10)
-		for i := 0; i < n; i++ {
-			msg += "阿巴"
-			if rand.Intn(5) == 2 {
-				msg += ","
+		if ok, _ := db.Redis.SetNX("system:ababab", "1", time.Minute*5).Result(); ok {
+			if args.Self() {
+				return
 			}
+			msg := ""
+			n := 1 + rand.Intn(10)
+			for i := 0; i < n; i++ {
+				msg += "阿巴"
+				if rand.Intn(5) == 2 {
+					msg += ","
+				}
+			}
+			if n < 3 {
+				msg += "?"
+			} else if n < 5 {
+				msg += "!"
+			}
+			args.SendMessage(msg + "(来自人工智能的回复,发送'帮助'查看命令)")
 		}
-		if n < 3 {
-			msg += "?"
-		} else if n < 5 {
-			msg += "!"
-		}
-		args.SendMessage(msg + "(来自人工智能的回复,发送'帮助'查看命令)")
 	}); err != nil {
 		log.Fatal(err)
 	}
