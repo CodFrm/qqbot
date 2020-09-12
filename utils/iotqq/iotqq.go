@@ -206,7 +206,9 @@ func (d *Message) SendPicUrl(Content string, Url string, args ...Option) (string
 	tmp["picBase64Buf"] = ""
 	tmp["content"] = Content
 	tmp["groupid"] = 0
-	tmp["atUser"] = o.At
+	if o.At > 0 {
+		tmp["content"] = "[ATUSER(" + strconv.FormatInt(o.At, 64) + ")]" + tmp["content"].(string)
+	}
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
 	if err != nil {
@@ -225,7 +227,6 @@ func (d *Data) SendXmlMessage(content string) (string, error) {
 	tmp["sendMsgType"] = "XmlMsg"
 	tmp["content"] = content
 	tmp["groupid"] = 0
-	tmp["atUser"] = 0
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
 	if err != nil {
@@ -249,7 +250,9 @@ func (d *Data) SendPicByBase64(Content string, Base64 string, args ...Option) (s
 	tmp["picBase64Buf"] = Base64
 	tmp["content"] = Content
 	tmp["groupid"] = 0
-	tmp["atUser"] = o.At
+	if o.At > 0 {
+		tmp["content"] = "[ATUSER(" + strconv.FormatInt(o.At, 64) + ")]" + tmp["content"].(string)
+	}
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
 	if err != nil {
@@ -270,7 +273,9 @@ func (d *Data) SendMsg(At int64, Content string) (string, error) {
 	tmp["picUrl"] = ""
 	tmp["content"] = Content
 	tmp["groupid"] = 0
-	tmp["atUser"] = At
+	if At > 0 {
+		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 64) + ")]" + tmp["content"].(string)
+	}
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := (http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1)))
 	if err != nil {
@@ -293,7 +298,9 @@ func SendPicByBase64(qqgroup int, At int64, Content string, Base64 string) (stri
 	tmp["picBase64Buf"] = Base64
 	tmp["content"] = Content
 	tmp["groupid"] = 0
-	tmp["atUser"] = At
+	if At > 0 {
+		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 64) + ")]" + tmp["content"].(string)
+	}
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
 	if err != nil {
@@ -312,7 +319,6 @@ func SendXML(qqgroup int, Content string) (string, error) {
 	tmp["sendMsgType"] = "XmlMsg"
 	tmp["content"] = Content
 	tmp["groupid"] = 0
-	tmp["atUser"] = 0
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
 	if err != nil {
@@ -335,7 +341,9 @@ func SendPicByUrl(qqgroup int, At int64, Content string, picUrl string) (string,
 	tmp["picBase64Buf"] = ""
 	tmp["content"] = Content
 	tmp["groupid"] = 0
-	tmp["atUser"] = At
+	if At > 0 {
+		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 64) + ")]" + tmp["content"].(string)
+	}
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
 	if err != nil {
@@ -355,8 +363,10 @@ func SendMsg(qqgroup int, At int64, Content string) (string, error) {
 	tmp["fileMd5"] = ""
 	tmp["picUrl"] = ""
 	tmp["content"] = Content
+	if At > 0 {
+		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 64) + ")]" + tmp["content"].(string)
+	}
 	tmp["groupid"] = 0
-	tmp["atUser"] = At
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := (http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1)))
 	if err != nil {
@@ -395,7 +405,6 @@ func SendFriendPicMsg(qq int64, Content string, Base64 string) (string, error) {
 	tmp["picBase64Buf"] = Base64
 	tmp["content"] = Content
 	tmp["groupid"] = 0
-	tmp["atUser"] = 0
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
 	if err != nil {
@@ -420,7 +429,6 @@ func SendFriendMsg(qq int64, Content string) (string, error) {
 	tmp["picBase64Buf"] = ""
 	tmp["content"] = Content
 	tmp["groupid"] = 0
-	tmp["atUser"] = 0
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
 	if err != nil {
@@ -442,7 +450,6 @@ func SendPrivateMsg(group int, qq int64, Content string) (string, error) {
 	tmp["sendMsgType"] = "TextMsg"
 	tmp["content"] = Content
 	tmp["groupid"] = group
-	tmp["atUser"] = 0
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
 	if err != nil {
