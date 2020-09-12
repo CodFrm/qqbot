@@ -274,7 +274,7 @@ func (d *Data) SendMsg(At int64, Content string) (string, error) {
 	tmp["content"] = Content
 	tmp["groupid"] = 0
 	if At > 0 {
-		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 64) + ")]" + tmp["content"].(string)
+		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 10) + ")]" + tmp["content"].(string)
 	}
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := (http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1)))
@@ -299,7 +299,7 @@ func SendPicByBase64(qqgroup int, At int64, Content string, Base64 string) (stri
 	tmp["content"] = Content
 	tmp["groupid"] = 0
 	if At > 0 {
-		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 64) + ")]" + tmp["content"].(string)
+		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 10) + ")]" + tmp["content"].(string)
 	}
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
@@ -342,7 +342,7 @@ func SendPicByUrl(qqgroup int, At int64, Content string, picUrl string) (string,
 	tmp["content"] = Content
 	tmp["groupid"] = 0
 	if At > 0 {
-		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 64) + ")]" + tmp["content"].(string)
+		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 10) + ")]" + tmp["content"].(string)
 	}
 	tmp1, _ := json.Marshal(tmp)
 	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
@@ -364,7 +364,7 @@ func SendMsg(qqgroup int, At int64, Content string) (string, error) {
 	tmp["picUrl"] = ""
 	tmp["content"] = Content
 	if At > 0 {
-		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 64) + ")]" + tmp["content"].(string)
+		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 10) + ")]" + tmp["content"].(string)
 	}
 	tmp["groupid"] = 0
 	tmp1, _ := json.Marshal(tmp)
