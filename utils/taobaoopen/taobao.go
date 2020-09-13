@@ -165,3 +165,36 @@ func (t *Taobao) ConversionShopId(id string) (*ConverseTkl, error) {
 	}
 	return ret, nil
 }
+
+func (t *Taobao) QueryOrder(order ...OrderOption) ([]*OrderItem, *OrderQueryRespond, error) {
+	o := &OrderOptions{}
+	for _, v := range order {
+		v(o)
+	}
+	resp, err := HttpGet("https://api.zhetaoke.com:10001/api/open_dingdanchaxun2.ashx?appkey="+t.ZtkAppKey+"&sid="+
+		t.Sid+"&start_time="+o.StartTime+"&end_time="+o.EndTime+"&signurl=1", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	ret := &QueryOrderUrl{}
+	if err := json.Unmarshal(resp, ret); err != nil {
+		retErr := &ZtkError{}
+		if err := json.Unmarshal(resp, retErr); err != nil {
+			return nil, nil, err
+		}
+		return nil, nil, retErr
+	}
+	resp, err = HttpGet(ret.Url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	respJson := &OrderQueryRespond{}
+	if err := json.Unmarshal(resp, respJson); err != nil {
+		retErr := &TaobaoError{}
+		if err := json.Unmarshal(resp, retErr); err != nil {
+			return nil, nil, err
+		}
+		return nil, nil, retErr
+	}
+	return respJson.TbkScOrderDetailsGetResponse.Data.Results.PublisherOrderDto, respJson, nil
+}

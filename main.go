@@ -107,7 +107,7 @@ func reconnect() *gosocketio.Client {
 				return
 			}
 		}
-		if ok, _ := db.Redis.SetNX("system:ababab", "1", time.Minute*5).Result(); ok {
+		if ok, _ := db.Redis.SetNX("system:ababab:"+strconv.FormatInt(args.GetQQ(), 10), "1", time.Minute*5).Result(); ok {
 			if args.Self() {
 				return
 			}

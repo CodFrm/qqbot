@@ -122,3 +122,98 @@ type ZtkError struct {
 func (e *ZtkError) Error() string {
 	return e.Content
 }
+
+type OrderOption func(options *OrderOptions)
+
+type OrderOptions struct {
+	StartTime     string
+	EndTime       string
+	OrderScene    string
+	PageNo        int
+	PositionIndex int
+}
+
+type QueryOrderUrl struct {
+	Url string `json:"url"`
+}
+
+type TaobaoError struct {
+	ErrorResponse struct {
+		Code      int    `json:"code"`
+		Msg       string `json:"msg"`
+		SubCode   string `json:"sub_code"`
+		SubMsg    string `json:"sub_msg"`
+		RequestID string `json:"request_id"`
+	} `json:"error_response"`
+}
+
+func (e *TaobaoError) Error() string {
+	return e.ErrorResponse.SubMsg
+}
+
+type OrderItem struct {
+	AdzoneID                           int64  `json:"adzone_id"`
+	AdzoneName                         string `json:"adzone_name"`
+	AlimamaRate                        string `json:"alimama_rate"`
+	AlimamaShareFee                    string `json:"alimama_share_fee"`
+	AlipayTotalPrice                   string `json:"alipay_total_price"`
+	ClickTime                          string `json:"click_time"`
+	DepositPrice                       string `json:"deposit_price"`
+	FlowSource                         string `json:"flow_source"`
+	IncomeRate                         string `json:"income_rate"`
+	IsLx                               string `json:"is_lx"`
+	ItemCategoryName                   string `json:"item_category_name"`
+	ItemID                             int64  `json:"item_id"`
+	ItemImg                            string `json:"item_img"`
+	ItemLink                           string `json:"item_link"`
+	ItemNum                            int    `json:"item_num"`
+	ItemPrice                          string `json:"item_price"`
+	ItemTitle                          string `json:"item_title"`
+	OrderType                          string `json:"order_type"`
+	PubID                              int    `json:"pub_id"`
+	PubShareFee                        string `json:"pub_share_fee"`
+	PubSharePreFee                     string `json:"pub_share_pre_fee"`
+	PubShareRate                       string `json:"pub_share_rate"`
+	RefundTag                          int    `json:"refund_tag"`
+	SellerNick                         string `json:"seller_nick"`
+	SellerShopTitle                    string `json:"seller_shop_title"`
+	SiteID                             int    `json:"site_id"`
+	SiteName                           string `json:"site_name"`
+	SubsidyFee                         string `json:"subsidy_fee"`
+	SubsidyRate                        string `json:"subsidy_rate"`
+	SubsidyType                        string `json:"subsidy_type"`
+	TbDepositTime                      string `json:"tb_deposit_time"`
+	TbPaidTime                         string `json:"tb_paid_time"`
+	TerminalType                       string `json:"terminal_type"`
+	TkCommissionFeeForMediaPlatform    string `json:"tk_commission_fee_for_media_platform"`
+	TkCommissionPreFeeForMediaPlatform string `json:"tk_commission_pre_fee_for_media_platform"`
+	TkCommissionRateForMediaPlatform   string `json:"tk_commission_rate_for_media_platform"`
+	TkCreateTime                       string `json:"tk_create_time"`
+	TkDepositTime                      string `json:"tk_deposit_time"`
+	TkOrderRole                        int    `json:"tk_order_role"`
+	TkPaidTime                         string `json:"tk_paid_time"`
+	TkStatus                           int    `json:"tk_status"`
+	TkTotalRate                        string `json:"tk_total_rate"`
+	TotalCommissionFee                 string `json:"total_commission_fee"`
+	TotalCommissionRate                string `json:"total_commission_rate"`
+	TradeID                            string `json:"trade_id"`
+	TradeParentID                      string `json:"trade_parent_id"`
+	PayPrice                           string `json:"pay_price,omitempty"`
+	TkEarningTime                      string `json:"tk_earning_time,omitempty"`
+}
+
+type OrderQueryRespond struct {
+	TbkScOrderDetailsGetResponse struct {
+		Data struct {
+			HasNext       bool   `json:"has_next"`
+			HasPre        bool   `json:"has_pre"`
+			PageNo        int    `json:"page_no"`
+			PageSize      int    `json:"page_size"`
+			PositionIndex string `json:"position_index"`
+			Results       struct {
+				PublisherOrderDto []*OrderItem `json:"publisher_order_dto"`
+			} `json:"results"`
+		} `json:"data"`
+		RequestID string `json:"request_id"`
+	} `json:"tbk_sc_order_details_get_response"`
+}
