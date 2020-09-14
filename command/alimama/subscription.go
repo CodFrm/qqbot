@@ -102,12 +102,6 @@ func UnSubscribe(qq int64, topic string) error {
 	return nil
 }
 
-func AllSubscribe() []string {
-	ret := make([]string, 0)
-	for k, v := range topicList {
-		if v > 0 {
-			ret = append(ret, k)
-		}
-	}
-	return ret
+func AllSubscribe() map[string]int {
+	return topicList
 }

@@ -100,7 +100,10 @@ func reconnect() *gosocketio.Client {
 					return
 				} else if _, ok := args.CommandMatch("^订阅列表$"); ok {
 					list := alimama.AllSubscribe()
-					msg := strings.Join(list, ",")
+					msg := ""
+					for k, v := range list {
+						msg += k + ":" + strconv.Itoa(v) + ","
+					}
 					args.SendMessage(msg)
 					return
 				}
