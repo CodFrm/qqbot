@@ -8,6 +8,7 @@ import (
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"github.com/CodFrm/iotqq-plugins/utils/jdunion"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
+	"github.com/robfig/cron/v3"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -18,15 +19,16 @@ var tb *taobaoopen.Taobao
 var jd *jdunion.JdUnion
 var mq *broker
 var tbfl *taobaoopen.Taobao
+var topicList map[string]int
 
 func Init() error {
-	//c := cron.New(cron.WithSeconds())
-	//c.AddFunc("0 30 7 * * ?", notice("美好的一天开始了,记得吃早餐哦."))
-	//c.AddFunc("0 30 11 * * ?", notice("该吃中饭啦,来一份外卖吧~"))
-	//c.AddFunc("0 30 14 * * ?", notice("下午茶时间到啦,来份奶茶吧~"))
-	//c.AddFunc("0 30 17 * * ?", notice("该吃晚饭啦,来一份外卖吧~"))
-	//c.AddFunc("0 30 10 * * ?", notice("夜宵时间,来撸串"))
-	//c.Start()
+	c := cron.New(cron.WithSeconds())
+	c.AddFunc("0 30 7 * * ?", notice("美好的一天开始了,记得吃早餐哦."))
+	c.AddFunc("0 30 11 * * ?", notice("该吃中饭啦,要不要点外卖~"))
+	c.AddFunc("0 30 14 * * ?", notice("下午茶时间到啦,来份奶茶吧~"))
+	c.AddFunc("0 30 17 * * ?", notice("该吃晚饭啦,来一份外卖吧~"))
+	c.AddFunc("0 30 22 * * ?", notice("夜宵时间,来撸串"))
+	c.Start()
 	tb = taobaoopen.NewTaobao(config.AppConfig.Taobao)
 	tbfl = taobaoopen.NewTaobao(config.AppConfig.TaobaoFl)
 	jd = jdunion.NewJdUnion(config.AppConfig.Jd)
@@ -42,6 +44,7 @@ func Init() error {
 			return err
 		}
 		for _, topic := range tlist {
+			topicList[topic]++
 			mq.subscribe(topic, qq, &subscribe{
 				handler: func(info string, keyword *publisher) {
 					group, _ := strconv.ParseInt(keyword.param, 10, 64)
@@ -57,12 +60,12 @@ func Init() error {
 
 func notice(t string) func() {
 	return func() {
-		list, err := iotqq.GetGroupList()
+		list, err := db.Redis.SMembers("alimama:group:list").Result()
 		if err != nil {
 			return
 		}
 		for _, v := range list {
-			iotqq.QueueSendMsg(v.GroupId, 0, t+"\nhttps://sourl.cn/FhPLTD\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看."+
+			iotqq.QueueSendMsg(utils.StringToInt(v), 0, t+"\nhttps://sourl.cn/FhPLTD\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看."+
 				"美团可使用此链接:https://sourl.cn/Kvz8Hk"+
 				"")
 		}

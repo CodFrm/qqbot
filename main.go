@@ -81,27 +81,29 @@ func reconnect() *gosocketio.Client {
 	lastNum := make(map[int]int)
 	if err := c.On("OnFriendMsgs", func(h *gosocketio.Channel, args iotqq.Message) {
 		if _, ok := config.AppConfig.FeatureMap["alimama"]; ok {
-			if _, ok := args.CommandMatch("([\\p{Sc}](\\w{8,12})[\\p{Sc}]|http(s|):)"); len(args.CurrentPacket.Data.Content) > 6 && ((ok && args.CurrentPacket.Data.Content[:3] != "淘") || args.CurrentPacket.Data.Content[:4] == "转 ") {
-				if args.CurrentPacket.Data.FromUin != args.CurrentQQ {
-					if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; ok {
+			if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; !ok {
+				if _, ok := args.CommandMatch("([\\p{Sc}](\\w{8,12})[\\p{Sc}]|http(s|):)"); len(args.CurrentPacket.Data.Content) > 6 && ((ok && args.CurrentPacket.Data.Content[:3] != "淘") || args.CurrentPacket.Data.Content[:4] == "转 ") {
+					if args.CurrentPacket.Data.FromUin != args.CurrentQQ {
 						if err := alimama.Forward(args); err != nil {
 							args.SendMessage(err.Error())
 						}
 						return
 					}
+					//转发
 				}
-				//转发
-			}
-			if cmd, ok := args.CommandMatch("(添加|删除)群(\\d+)"); ok {
-				if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; !ok {
-					args.SendMessage("没有权限")
-				}
-				if err := alimama.AddGroup(cmd[2], cmd[1] == "删除"); err != nil {
-					args.SendMessage(err.Error())
+				if cmd, ok := args.CommandMatch("(添加|删除)群(\\d+)"); ok {
+					if err := alimama.AddGroup(cmd[2], cmd[1] == "删除"); err != nil {
+						args.SendMessage(err.Error())
+						return
+					}
+					args.SendMessage("OK")
+					return
+				} else if _, ok := args.CommandMatch("^订阅列表$"); ok {
+					list := alimama.AllSubscribe()
+					msg := strings.Join(list, ",")
+					args.SendMessage(msg)
 					return
 				}
-				args.SendMessage("OK")
-				return
 			}
 			if dealUniversal(args) {
 				return

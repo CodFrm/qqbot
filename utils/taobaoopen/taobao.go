@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -171,8 +172,12 @@ func (t *Taobao) QueryOrder(order ...OrderOption) ([]*OrderItem, *OrderQueryResp
 	for _, v := range order {
 		v(o)
 	}
-	resp, err := HttpGet("https://api.zhetaoke.com:10001/api/open_dingdanchaxun2.ashx?appkey="+t.ZtkAppKey+"&sid="+
-		t.Sid+"&start_time="+o.StartTime+"&end_time="+o.EndTime+"&signurl=1", nil)
+	url := "https://api.zhetaoke.com:10001/api/open_dingdanchaxun2.ashx?appkey=" + t.ZtkAppKey + "&sid=" +
+		t.Sid + "&start_time=" + o.StartTime + "&end_time=" + o.EndTime + "&signurl=1"
+	if o.PageNo > 0 {
+		url += "&page_no=" + strconv.Itoa(o.PageNo)
+	}
+	resp, err := HttpGet(url, nil)
 	if err != nil {
 		return nil, nil, err
 	}

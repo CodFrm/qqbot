@@ -70,6 +70,7 @@ func Subscribe(group int, qq int64, topic string) error {
 	if err != nil {
 		return err
 	}
+	topicList[topic]++
 	mq.subscribe(topic, sqq, &subscribe{
 		handler: func(info string, keyword *publisher) {
 			group, _ := strconv.ParseInt(keyword.param, 10, 64)
@@ -94,8 +95,19 @@ func UnSubscribe(qq int64, topic string) error {
 		list = append(list, topic)
 	}
 	for _, v := range list {
+		topicList[v]--
 		mq.unsubscribe(v, sqq)
 		db.Redis.SRem("alimama:subscribe:topic:"+sqq, v)
 	}
 	return nil
+}
+
+func AllSubscribe() []string {
+	ret := make([]string, 0)
+	for k, v := range topicList {
+		if v > 0 {
+			ret = append(ret, k)
+		}
+	}
+	return ret
 }
