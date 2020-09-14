@@ -102,7 +102,9 @@ func reconnect() *gosocketio.Client {
 					list := alimama.AllSubscribe()
 					msg := ""
 					for k, v := range list {
-						msg += k + ":" + strconv.Itoa(v) + ","
+						if v > 0 {
+							msg += k + ":" + strconv.Itoa(v) + ","
+						}
 					}
 					args.SendMessage(msg)
 					return
@@ -202,7 +204,7 @@ func reconnect() *gosocketio.Client {
 				return
 			}
 			if _, ok := args.CommandMatch("^外卖 帮助$"); ok {
-				args.SendMessage("【活动链接】https://sourl.cn/FhPLTD\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看\n" +
+				args.SendMessage("【活动链接】复制这条信息，$5YiUccAeTlY$，到【手机淘宝】即可查看\n" +
 					"美团可使用此链接:https://sourl.cn/Kvz8Hk\n" +
 					"1.外卖,触发指令:'外卖 [微信*]',可获取外卖红包链接,增加[微信]参数可获取微信小程序下单二维码图片\n" +
 					"2.优惠购物,触发指令:'有无[物品名]',可获取商品列表和内部优惠券,选择你心爱的物品下单吧" +
@@ -213,7 +215,7 @@ func reconnect() *gosocketio.Client {
 					b := utils.FileBase64("./data/image/elm_wx.jpg")
 					args.CurrentPacket.Data.SendPicByBase64("", b)
 				} else {
-					args.SendMessage("每日领饿了么餐饮红包\n【活动链接】https://sourl.cn/FhPLTD \n-----------------\n复制这条信息，$nH3n1zNqDip$，到【手机淘宝】即可查看\n" +
+					args.SendMessage("每日领饿了么餐饮红包\n【活动链接】复制这条信息，$5YiUccAeTlY$，到【手机淘宝】即可查看\n" +
 						"美团可使用此链接:https://sourl.cn/Kvz8Hk" +
 						"")
 				}
