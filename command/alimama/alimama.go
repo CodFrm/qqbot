@@ -29,6 +29,7 @@ func Init() error {
 	c.AddFunc("0 30 17 * * ?", notice("该吃晚饭啦,来一份外卖吧~"))
 	c.AddFunc("0 30 22 * * ?", notice("夜宵时间,来撸串"))
 	c.Start()
+	topicList = make(map[string]int)
 	tb = taobaoopen.NewTaobao(config.AppConfig.Taobao)
 	tbfl = taobaoopen.NewTaobao(config.AppConfig.TaobaoFl)
 	jd = jdunion.NewJdUnion(config.AppConfig.Jd)
