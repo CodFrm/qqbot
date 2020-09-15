@@ -176,12 +176,31 @@ func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 			continue
 		}
 		msg = strings.ReplaceAll(msg, v[0], ret.Data.ShortURL)
-		ids := utils.RegexMatch(ret.Data.ClickURL, "e=(.*?)&")
-		if len(ids) > 0 {
+		resp, err := utils.HttpGet(ret.Data.ShortURL, nil, nil)
+		if err != nil {
 			retTkl.Content = append(retTkl.Content, taobaoopen.ConverseTklContent{
-				TaoID:    ids[1],
+				TaoID:    "error",
 				Shorturl: ret.Data.ShortURL,
 			})
+		} else {
+			tourl := utils.RegexMatch(string(resp), "hrl='(.*?)';")
+			if len(tourl) > 0 {
+				resp, err := utils.HttpGet(tourl[1], nil, nil)
+				if err != nil {
+					retTkl.Content = append(retTkl.Content, taobaoopen.ConverseTklContent{
+						TaoID:    "error",
+						Shorturl: ret.Data.ShortURL,
+					})
+				} else {
+					ids := utils.RegexMatch(string(resp), "sku[iI]d:[\"\\s]{1,2}(\\d+)[\",]")
+					if len(ids) > 0 {
+						retTkl.Content = append(retTkl.Content, taobaoopen.ConverseTklContent{
+							TaoID:    ids[1],
+							Shorturl: ret.Data.ShortURL,
+						})
+					}
+				}
+			}
 		}
 	}
 	if len(retTkl.Content) > 0 && retTkl.Content[0].TaoID != "" {
