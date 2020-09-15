@@ -66,7 +66,7 @@ func notice(t string) func() {
 			return
 		}
 		for _, v := range list {
-			iotqq.QueueSendMsg(utils.StringToInt(v), 0, t+"\n复制这条信息，$5YiUccAeTlY$，到【手机淘宝】即可查看."+
+			iotqq.QueueSendMsg(utils.StringToInt(v), 0, t+"\n复制这条信息(建议收藏)，$5YiUccAeTlY$，到【手机淘宝】即可查看."+
 				"美团可使用此链接:https://sourl.cn/Kvz8Hk"+
 				"")
 		}
