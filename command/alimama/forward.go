@@ -7,6 +7,7 @@ import (
 	"github.com/CodFrm/iotqq-plugins/utils"
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -113,7 +114,9 @@ func Forward(args iotqq.Message) error {
 		} else {
 			url = pic.FriendPic[0].Url
 		}
-		if pic.Content[0] == '\r' {
+		reg := regexp.MustCompile("^\\s+")
+		pic.Content = reg.ReplaceAllString(pic.Content, "")
+		if pic.Content[0] == '\r' || pic.Content[0] == '\n' {
 			pic.Content = pic.Content[1:]
 		}
 		for _, v := range list {
