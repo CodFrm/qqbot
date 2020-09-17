@@ -113,6 +113,9 @@ func Forward(args iotqq.Message) error {
 		} else {
 			url = pic.FriendPic[0].Url
 		}
+		if pic.Content[0] == '\n' {
+			pic.Content = pic.Content[1:]
+		}
 		for _, v := range list {
 			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, "1"+pic.Content+"[PICFLAG]", url)
 		}
