@@ -113,7 +113,7 @@ func Forward(args iotqq.Message) error {
 		} else {
 			url = pic.FriendPic[0].Url
 		}
-		if pic.Content[0] == '\n' {
+		if pic.Content[0] == '\r' {
 			pic.Content = pic.Content[1:]
 		}
 		for _, v := range list {
