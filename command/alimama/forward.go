@@ -70,9 +70,9 @@ func Forward(args iotqq.Message) error {
 		content := tkl.Content[0].TaoTitle + " " + tkl.Content[0].QuanhouJiage + "￥" + "\n" + tkl.Content[0].Tkl
 		for _, v := range list {
 			if url == "" {
-				iotqq.QueueSendMsg(utils.StringToInt(v), 0, content)
+				iotqq.QueueSendMsg(utils.StringToInt(v), 0, "1"+content)
 			} else {
-				iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, content, url)
+				iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, "1"+content+"[PICFLAG]", url)
 			}
 		}
 		mq.publisher(content)
@@ -88,7 +88,7 @@ func Forward(args iotqq.Message) error {
 			return errors.New("重复发送")
 		}
 		for _, v := range list {
-			iotqq.QueueSendMsg(utils.StringToInt(v), 0, args.CurrentPacket.Data.Content)
+			iotqq.QueueSendMsg(utils.StringToInt(v), 0, "1"+args.CurrentPacket.Data.Content)
 		}
 		mq.publisher(args.CurrentPacket.Data.Content)
 		return nil
@@ -114,7 +114,7 @@ func Forward(args iotqq.Message) error {
 			url = pic.FriendPic[0].Url
 		}
 		for _, v := range list {
-			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, pic.Content, url)
+			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, "1"+pic.Content+"[PICFLAG]", url)
 		}
 		mq.publisher(pic.Content)
 		return nil

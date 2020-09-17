@@ -50,7 +50,7 @@ func Init() error {
 				handler: func(info string, keyword *publisher) {
 					group, _ := strconv.ParseInt(keyword.param, 10, 64)
 					qq, _ := strconv.ParseInt(keyword.tag, 10, 64)
-					iotqq.QueueSendPrivateMsg(int(group), qq, "您关注的'"+keyword.topic+"'有新消息\n"+info+"\n回复'退订"+keyword.topic+"'可退订该消息.不加关键字退订全部")
+					iotqq.QueueSendPrivateMsg(int(group), qq, "1您关注的'"+keyword.topic+"'有新消息\n"+info+"\n回复'退订"+keyword.topic+"'可退订该消息.不加关键字退订全部")
 				},
 				param: group,
 			})
