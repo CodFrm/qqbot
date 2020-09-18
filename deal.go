@@ -53,6 +53,10 @@ func dealUniversal(args iotqq.Message) bool {
 	} else if _, ok := args.CommandMatch("绑定(\\s|)(\\d+)($|\")"); ok {
 
 	} else if cmd, ok := args.CommandMatch("订阅(\\s|)(.*?)($|\")"); ok && !args.Self() {
+		if cmd[2] == "" {
+			args.SendMessage("请输入订阅关键字")
+			return true
+		}
 		if err := alimama.Subscribe(args.GetGroupId(), args.GetQQ(), cmd[2]); err != nil {
 			log.Println("订阅", err)
 			args.SendMessage("发生了一个系统错误")
