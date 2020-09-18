@@ -50,7 +50,7 @@ func Init() error {
 				handler: func(info string, keyword *publisher) {
 					group, _ := strconv.ParseInt(keyword.param, 10, 64)
 					qq, _ := strconv.ParseInt(keyword.tag, 10, 64)
-					iotqq.QueueSendPrivateMsg(int(group), qq, "1您关注的'"+keyword.topic+"'有新消息\n"+info+"\n回复'退订"+keyword.topic+"'可退订该消息.不加关键字退订全部")
+					iotqq.QueueSendPrivateMsg(int(group), qq, "0-您关注的'"+keyword.topic+"'有新消息\n"+info+"\n回复'退订"+keyword.topic+"'可退订该消息.不加关键字退订全部")
 				},
 				param: group,
 			})
@@ -66,7 +66,7 @@ func notice(t string) func() {
 			return
 		}
 		for _, v := range list {
-			iotqq.QueueSendMsg(utils.StringToInt(v), 0, t+"\n复制这条信息(建议收藏)，$5YiUccAeTlY$，到【手机淘宝】即可查看."+
+			iotqq.QueueSendMsg(utils.StringToInt(v), 0, "0-"+t+"\n复制这条信息(建议收藏)，$5YiUccAeTlY$，到【手机淘宝】即可查看."+
 				"美团可使用此链接:https://sourl.cn/Kvz8Hk"+
 				"")
 		}
