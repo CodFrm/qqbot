@@ -59,7 +59,7 @@ func HttpGet(url string, header map[string]string, proxy func(ctx context.Contex
 		Transport: &http.Transport{
 			DialContext: proxy,
 		},
-		Timeout: time.Second * 60,
+		Timeout: time.Second * 20,
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

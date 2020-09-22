@@ -46,7 +46,7 @@ func (k Kvs) Swap(i, j int) {
 func HttpGet(url string, header map[string]string) ([]byte, error) {
 	c := http.Client{
 		Transport: &http.Transport{},
-		Timeout:   time.Second * 60,
+		Timeout:   time.Second * 20,
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
