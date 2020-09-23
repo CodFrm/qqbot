@@ -114,10 +114,12 @@ type Data struct {
 type PicMsgContent struct {
 	Content   string `json:"Content"`
 	FriendPic []struct {
-		Url string `json:"Url"`
+		Url     string `json:"Url"`
+		FileMd5 string `json:"FileMd5"`
 	} `json:"FriendPic"`
 	GroupPic []struct {
-		Url string `json:"Url"`
+		Url     string `json:"Url"`
+		FileMd5 string `json:"FileMd5"`
 	} `json:"GroupPic"`
 }
 
@@ -338,6 +340,31 @@ func SendPicByUrl(qqgroup int, At int64, Content string, picUrl string) (string,
 	tmp["picBase64Buf"] = ""
 	tmp["fileMd5"] = ""
 	tmp["picUrl"] = picUrl
+	tmp["picBase64Buf"] = ""
+	tmp["content"] = Content
+	tmp["groupid"] = 0
+	if At > 0 {
+		tmp["content"] = "[ATUSER(" + strconv.FormatInt(At, 10) + ")]" + tmp["content"].(string)
+	}
+	tmp1, _ := json.Marshal(tmp)
+	resp, err := http.Post("http://"+config.AppConfig.Url+"/v1/LuaApiCaller?funcname=SendMsg&timeout=10&qq="+config.AppConfig.QQ, "application/json", bytes.NewBuffer(tmp1))
+	if err != nil {
+		return "", nil
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	return string(body), nil
+}
+
+func SendPicByMd5(qqgroup int, At int64, Content string, md5 string) (string, error) {
+	//发送图文信息
+	tmp := make(map[string]interface{})
+	tmp["toUser"] = qqgroup
+	tmp["sendToType"] = 2
+	tmp["sendMsgType"] = "PicMsg"
+	tmp["picBase64Buf"] = ""
+	tmp["picMd5s"] = []string{md5}
+	tmp["picUrl"] = ""
 	tmp["picBase64Buf"] = ""
 	tmp["content"] = Content
 	tmp["groupid"] = 0

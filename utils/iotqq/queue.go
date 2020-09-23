@@ -11,6 +11,7 @@ type GroupMsg struct {
 	Content string
 	Url     string
 	Private bool
+	Md5     string
 }
 
 var groupQueue chan *GroupMsg
@@ -32,6 +33,8 @@ func sendQueueMsg() {
 		} else {
 			if m.Url != "" {
 				SendPicByUrl(m.Qqgroup, m.At, m.Content, m.Url)
+			} else if m.Md5 != "" {
+				SendPicByMd5(m.Qqgroup, m.At, m.Content, m.Md5)
 			} else {
 				SendMsg(m.Qqgroup, m.At, m.Content)
 			}
@@ -55,6 +58,16 @@ func QueueSendPicMsg(qqgroup int, At int64, Content string, Url string) error {
 		At:      At,
 		Content: Content,
 		Url:     Url,
+	}
+	return nil
+}
+
+func QueueSendPicMsgByPicMd5(qqgroup int, At int64, Content string, md5 string) error {
+	groupQueue <- &GroupMsg{
+		Qqgroup: qqgroup,
+		At:      At,
+		Content: Content,
+		Md5:     md5,
 	}
 	return nil
 }

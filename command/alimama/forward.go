@@ -108,15 +108,15 @@ func Forward(args iotqq.Message) error {
 		if tkl != nil && IsTklSend(tkl) {
 			return errors.New("重复发送")
 		}
-		url := ""
+		md5 := ""
 		if pic.FriendPic == nil {
-			url = pic.GroupPic[0].Url
+			md5 = pic.GroupPic[0].FileMd5
 		} else {
-			url = pic.FriendPic[0].Url
+			md5 = pic.FriendPic[0].FileMd5
 		}
 		reg := regexp.MustCompile("^(\\d+)")
 		for _, v := range list {
-			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, reg.ReplaceAllString(pic.Content, "$1[PICFLAG]"), url)
+			iotqq.QueueSendPicMsgByPicMd5(utils.StringToInt(v), 0, reg.ReplaceAllString(pic.Content, "$1[PICFLAG]"), md5)
 		}
 		mq.publisher(pic.Content)
 		return nil
