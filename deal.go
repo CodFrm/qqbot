@@ -8,6 +8,7 @@ import (
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
 	"log"
+	"net/url"
 )
 
 func dealUniversal(args iotqq.Message) bool {
@@ -27,17 +28,11 @@ func dealUniversal(args iotqq.Message) bool {
 		}
 		return true
 	} else if _, ok := args.CommandMatch("([\\p{Sc}](\\w{8,12})[\\p{Sc}])|(.*?\\.jd\\.com\\/)|(.*?\\.(taobao|tmall)\\.com\\/)"); ok {
-		var ret string
 		var tkl *taobaoopen.ConverseTkl
-		var err error
-		if args.CurrentPacket.Data.Content[:3] == "淘" {
-			ret, tkl, err = alimama.DealTklFl(args.CurrentPacket.Data.Content[3:])
-		} else {
-			ret, tkl, err = alimama.DealTklFl(args.CurrentPacket.Data.Content)
-		}
+		_, tkl, err := alimama.DealTklFl(args.CurrentPacket.Data.Content[3:])
 		if err != nil {
 			if err.Error() == "很抱歉！商品ID解析错误！！！" {
-				args.SendMessage("此商品不支持,无法转链")
+				args.SendMessage("此商品不支持,无法搜索!")
 				return true
 			}
 			log.Println("淘口令", err)
@@ -45,9 +40,22 @@ func dealUniversal(args iotqq.Message) bool {
 		} else if tkl == nil {
 			args.SendMessage("没有发现淘口令")
 		} else if tkl.Content[0].Shorturl == "" {
-			args.SendMessage("此商品不支持,无法转链")
+			args.SendMessage("此商品不支持,无法搜索!")
 		} else {
-			args.SendMessage(ret + "\n" + tkl.Content[0].QuanhouJiage + "￥ " + tkl.Content[0].Shorturl + " 使用新的口令预计可f" + alimama.DealFl(tkl.Content[0].Tkfee3) + "￥")
+			msg := "约反:" + alimama.DealFl(tkl.Content[0].Tkfee3) + " "
+			if tkl.Content[0].CouponInfoMoney != "" {
+				msg += "优惠券:" + tkl.Content[0].CouponInfoMoney + " 券后价:"
+			} else {
+				msg += "价格:"
+			}
+			msg += tkl.Content[0].QuanhouJiage
+			kl := utils.RegexMatch(tkl.Content[0].Tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
+			if len(kl) == 2 {
+				msg += "\n" + alimama.ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(kl[1])+"&pic="+url.QueryEscape(tkl.Content[0].PictURL))
+				args.SendMessage(msg)
+			} else {
+				args.SendMessage("系统发生了一个错误")
+			}
 		}
 		return true
 	} else if _, ok := args.CommandMatch("绑定(\\s|)(\\d+)($|\")"); ok {
