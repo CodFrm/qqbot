@@ -51,7 +51,7 @@ func dealUniversal(args iotqq.Message) bool {
 			msg += tkl.Content[0].QuanhouJiage
 			kl := utils.RegexMatch(tkl.Content[0].Tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
 			if len(kl) == 2 {
-				msg += "\n" + alimama.ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(kl[1])+"&pic="+url.QueryEscape(tkl.Content[0].PictURL))
+				msg += "\n" + alimama.ShortUrl("http://gw.icodef.com/tb.php?tkl="+url.QueryEscape(kl[1])+"&pic="+url.QueryEscape(tkl.Content[0].PictURL))
 				args.SendMessage(msg)
 			} else {
 				args.SendMessage("系统发生了一个错误")

@@ -252,7 +252,7 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 			if len(kl) == 2 {
 				tkl = kl[1]
 			}
-			ret += "价格:" + v.ZkFinalPrice + "￥ " + ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
+			ret += "价格:" + v.ZkFinalPrice + "￥ " + ShortUrl("http://gw.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
 		} else {
 			coupon_start_fee, _ := strconv.ParseFloat(v.CouponStartFee, 64)
 			zk_final_price, _ := strconv.ParseFloat(v.ZkFinalPrice, 64)
@@ -266,7 +266,7 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 				if len(kl) == 2 {
 					tkl = kl[1]
 				}
-				ret += "原价:" + v.ZkFinalPrice + "￥ 券后价:" + strconv.FormatFloat(zk_final_price-coupon_amount, 'G', 5, 64) + "￥ " + ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
+				ret += "原价:" + v.ZkFinalPrice + "￥ 券后价:" + strconv.FormatFloat(zk_final_price-coupon_amount, 'G', 5, 64) + "￥ " + ShortUrl("http://gw.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
 			} else {
 				tkl, err := tb.CreateTpwd(v.ShortTitle, "https:"+v.Url)
 				if err != nil || tkl == "" {
@@ -276,7 +276,7 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 				if len(kl) == 2 {
 					tkl = kl[1]
 				}
-				ret += "价格:" + v.ZkFinalPrice + "￥ " + ShortUrl("http://tb.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
+				ret += "价格:" + v.ZkFinalPrice + "￥ " + ShortUrl("http://gw.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
 			}
 		}
 	}
