@@ -24,7 +24,7 @@ func dealUniversal(args iotqq.Message) bool {
 			log.Println("有无", err)
 			args.SendMessage("发生了一个系统错误")
 		} else {
-			args.SendMessage(str + "\n另可以发送'订阅" + cmd[1] + "'来关注本类商品哦\n加群获取更多资讯,1131503629")
+			args.SendMessage(str + "\n另可以发送'订阅" + cmd[1] + "'来关注本类商品哦\n小程序/APP自助查券和返利https://m3w.cn/tyq")
 		}
 		return true
 	} else if _, ok := args.CommandMatch("([\\p{Sc}](\\w{8,12})[\\p{Sc}])|(.*?\\.jd\\.com\\/)|(.*?\\.(taobao|tmall)\\.com\\/)"); ok {
@@ -48,7 +48,7 @@ func dealUniversal(args iotqq.Message) bool {
 			} else {
 				msg += "价格:"
 			}
-			msg += tkl.Content[0].QuanhouJiage
+			msg += tkl.Content[0].QuanhouJiage + "\n小程序/APP自助查券和返利https://m3w.cn/tyq"
 			kl := utils.RegexMatch(tkl.Content[0].Tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
 			if len(kl) == 2 {
 				msg += "\n" + alimama.ShortUrl("http://gw.icodef.com/tb.php?tkl="+url.QueryEscape(kl[1])+"&pic="+url.QueryEscape(tkl.Content[0].PictURL))
@@ -84,7 +84,8 @@ func dealUniversal(args iotqq.Message) bool {
 		args.SendMessage("1.优惠购物,触发指令:'有无[物品名]',可获取商品列表和内部优惠券,选择你心爱的物品下单吧\n" +
 			"2.优惠查券,触发指令:'[口令或者链接]',可查询优惠券和优惠口令\n" +
 			"3.订阅商品,触发指令:'订阅[关键字]',订阅指定的商品,如果有活动会直接私聊推送给你哦\n" +
-			"饿了么每日红包:$5YiUccAeTlY$")
+			"饿了么每日红包:$5YiUccAeTlY$\n" +
+			"小程序/APP自助查券和返利https://m3w.cn/tyq")
 		return true
 	}
 	//管理员命令
