@@ -266,7 +266,7 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 				if len(kl) == 2 {
 					tkl = kl[1]
 				}
-				ret += "原价:" + v.ZkFinalPrice + "￥ 券后价:" + strconv.FormatFloat(zk_final_price-coupon_amount, 'G', 5, 64) + "￥ " + ShortUrl("http://gw.icodef.com/tb.php?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
+				ret += "原价:" + v.ZkFinalPrice + "￥ 券后价:" + strconv.FormatFloat(zk_final_price-coupon_amount, 'G', 5, 64) + "￥ " + ShortUrl("http://gw.icodef.com/tb.html?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
 			} else {
 				tkl, err := tb.CreateTpwd(v.ShortTitle, "https:"+v.Url)
 				if err != nil || tkl == "" {
