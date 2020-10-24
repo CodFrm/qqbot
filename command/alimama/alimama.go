@@ -219,17 +219,20 @@ func DealFl(fl string) string {
 }
 
 func Search(keyword string) (string, error) {
-	list, err := tb.MaterialSearch(keyword)
-	if err != nil {
-		return "", err
-	}
+	//list, err := tb.MaterialSearch(keyword)
+	//if err != nil {
+	//	return "", err
+	//}
 	ret := &db.StringCache{}
 	if err := db.GetOrSet("alimama:search:"+keyword, ret, func() (interface{}, error) {
-		if s, err := GenCopywriting(list); err != nil {
-			return nil, err
-		} else {
-			return &db.StringCache{String: s}, nil
-		}
+		ret := "网站上线啦,更强大更好用的搜索方式" +
+			",直接访问此链接即可查看搜索结果:" + ShortUrl("https://gw.icodef.com/pages/search/search?keyword="+url.QueryEscape(keyword))
+		return &db.StringCache{String: ret}, nil
+		//if s, err := GenCopywriting(list); err != nil {
+		//	return nil, err
+		//} else {
+		//	return &db.StringCache{String: s}, nil
+		//}
 	}); err != nil {
 		return "", nil
 	}
