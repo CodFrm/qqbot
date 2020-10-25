@@ -151,7 +151,44 @@ func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 	if tkl := utils.RegexMatch(msg, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]"); len(tkl) >= 2 {
 		if ret, err := tb.ConversionTkl(tkl[1]); err != nil {
-			return msg, nil, err
+			if err.Error() == "很抱歉！商品ID解析错误！！！" {
+				// 获取口令链接和类型,判断是否为活动口令
+				ret, err := tb.ResolveTklAddress(tkl[1])
+				if err != nil {
+					return msg, nil, err
+				}
+				if ret.URLType == "10" {
+					//处理活动链接
+					activeId := ret.URLID
+					ret, err := tb.GetActiveInfo(activeId)
+					if err != nil {
+						return msg, nil, err
+					}
+					mytkl, err := tb.CreateTpwd(ret.Response.Data.PageName, ret.Response.Data.ClickURL)
+					if err != nil {
+						return msg, nil, err
+					}
+					newtkl := utils.RegexMatch(mytkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
+					if len(newtkl) == 2 {
+						msg = strings.ReplaceAll(msg, tkl[1], newtkl[1])
+						re := regexp.MustCompile("(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]")
+						msg = re.ReplaceAllString(msg, ret.Response.Data.ShortClickURL)
+						return msg, &taobaoopen.ConverseTkl{
+							Status: 0,
+							Content: []taobaoopen.ConverseTklContent{
+								{
+									TaoID:    activeId,
+									Tkl:      newtkl[1],
+									Shorturl: ret.Response.Data.ShortClickURL,
+								},
+							},
+						}, nil
+					}
+					return msg, nil, nil
+				}
+			} else {
+				return msg, nil, err
+			}
 		} else {
 			if len(ret.Content) < 1 {
 				return msg, nil, nil

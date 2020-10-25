@@ -27,6 +27,22 @@ type GetSpreadRespond struct {
 	} `json:"tbk_spread_get_response"`
 }
 
+type GetActiveInfo struct {
+	Response struct {
+		Data struct {
+			WxQrcodeURL       string `json:"wx_qrcode_url"`
+			ClickURL          string `json:"click_url"`
+			ShortClickURL     string `json:"short_click_url"`
+			TerminalType      string `json:"terminal_type"`
+			MaterialOssURL    string `json:"material_oss_url"`
+			PageName          string `json:"page_name"`
+			PageStartTime     string `json:"page_start_time"`
+			PageEndTime       string `json:"page_end_time"`
+			WxMiniprogramPath string `json:"wx_miniprogram_path"`
+		} `json:"data"`
+	} `json:"tbk_activity_info_get_response"`
+}
+
 type SpreadItem struct {
 	Content string `json:"content"`
 	ErrMsg  string `json:"err_msg"`
@@ -109,6 +125,14 @@ type ConverseTklContent struct {
 	Shorturl               string `json:"shorturl"`
 	Tkl                    string `json:"tkl"`
 }
+
+type TklAddress struct {
+	Status  int    `json:"status"`
+	Content string `json:"content"`
+	URLType string `json:"url_type"`
+	URLID   string `json:"url_id"`
+}
+
 type ConverseTkl struct {
 	Status  int                  `json:"status"`
 	Content []ConverseTklContent `json:"content"`

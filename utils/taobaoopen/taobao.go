@@ -131,6 +131,19 @@ func (t *Taobao) GetSpread(url []string) ([]*SpreadItem, error) {
 	return ret.Respond.Results.TbkSpread, nil
 }
 
+// https://open.taobao.com/api.htm?docId=48340&docType=2&scopeId=18294
+func (t *Taobao) GetActiveInfo(id string) (*GetActiveInfo, error) {
+	str, err := t.PublicFunc("taobao.tbk.activity.info.get", GenKv("adzone_id", t.AdzoneId), GenKv("activity_material_id", id))
+	if err != nil {
+		return nil, err
+	}
+	ret := &GetActiveInfo{}
+	if err := json.Unmarshal([]byte(str), &ret); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
 // http://www.zhetaoke.com/user/open/open_gaoyongzhuanlian_tkl.aspx
 func (t *Taobao) ConversionTkl(tkl string) (*ConverseTkl, error) {
 	resp, err := HttpGet("https://api.zhetaoke.com:10001/api/open_gaoyongzhuanlian_tkl.ashx?appkey="+
@@ -139,6 +152,24 @@ func (t *Taobao) ConversionTkl(tkl string) (*ConverseTkl, error) {
 		return nil, err
 	}
 	ret := &ConverseTkl{}
+	if err := json.Unmarshal(resp, ret); err != nil {
+		retErr := &ZtkError{}
+		if err := json.Unmarshal(resp, retErr); err != nil {
+			return nil, err
+		}
+		return nil, retErr
+	}
+	return ret, nil
+}
+
+// http://www.zhetaoke.com/user/open/open_shangpin_id.aspx
+func (t *Taobao) ResolveTklAddress(tkl string) (*TklAddress, error) {
+	resp, err := HttpGet("https://api.zhetaoke.com:10001/api/open_get_location.ashx?appkey="+
+		t.ZtkAppKey+"&sid="+t.Sid+"&content="+url.QueryEscape(tkl)+"&type=1&jb=1&member_sid=", nil)
+	if err != nil {
+		return nil, err
+	}
+	ret := &TklAddress{}
 	if err := json.Unmarshal(resp, ret); err != nil {
 		retErr := &ZtkError{}
 		if err := json.Unmarshal(resp, retErr); err != nil {
