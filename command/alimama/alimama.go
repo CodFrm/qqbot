@@ -8,7 +8,6 @@ import (
 	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"github.com/CodFrm/iotqq-plugins/utils/jdunion"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
-	"github.com/robfig/cron/v3"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -22,13 +21,13 @@ var tbfl *taobaoopen.Taobao
 var topicList map[string]int
 
 func Init() error {
-	c := cron.New(cron.WithSeconds())
-	c.AddFunc("0 30 7 * * ?", notice("美好的一天开始了,记得吃早餐哦."))
-	c.AddFunc("0 30 11 * * ?", notice("该吃中饭啦,要不要点外卖~"))
-	c.AddFunc("0 30 14 * * ?", notice("下午茶时间到啦,来份奶茶吧~"))
-	c.AddFunc("0 30 17 * * ?", notice("该吃晚饭啦,来一份外卖吧~"))
-	c.AddFunc("0 30 22 * * ?", notice("夜宵时间,来撸串"))
-	c.Start()
+	//c := cron.New(cron.WithSeconds())
+	//c.AddFunc("0 30 7 * * ?", notice("美好的一天开始了,记得吃早餐哦."))
+	//c.AddFunc("0 30 11 * * ?", notice("该吃中饭啦,要不要点外卖~"))
+	//c.AddFunc("0 30 14 * * ?", notice("下午茶时间到啦,来份奶茶吧~"))
+	//c.AddFunc("0 30 17 * * ?", notice("该吃晚饭啦,来一份外卖吧~"))
+	//c.AddFunc("0 30 22 * * ?", notice("夜宵时间,来撸串"))
+	//c.Start()
 	topicList = make(map[string]int)
 	tb = taobaoopen.NewTaobao(config.AppConfig.Taobao)
 	tbfl = taobaoopen.NewTaobao(config.AppConfig.TaobaoFl)
@@ -157,12 +156,15 @@ func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 				if err != nil {
 					return msg, nil, err
 				}
-				if ret.URLType == "10" {
+				if ret.URLType == "10" || ret.URLType == "3" {
 					//处理活动链接
 					activeId := ret.URLID
 					ret, err := tb.GetActiveInfo(activeId)
 					if err != nil {
 						return msg, nil, err
+					}
+					if len(ret.Response.Data.PageName) <= 5 {
+						ret.Response.Data.PageName = "省钱不吃土"
 					}
 					mytkl, err := tb.CreateTpwd(ret.Response.Data.PageName, ret.Response.Data.ClickURL)
 					if err != nil {
