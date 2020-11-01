@@ -264,7 +264,7 @@ func Search(keyword string) (string, error) {
 	//}
 	ret := &db.StringCache{}
 	if err := db.GetOrSet("alimama:search:"+keyword, ret, func() (interface{}, error) {
-		ret := "网站上线啦,更强大更好用的搜索方式:" + "https://gw.icodef.com/pages/search/index?keyword=" + url.QueryEscape(keyword)
+		ret := "网站上线啦,更强大更好用的搜索方式:" + "https://gw.icodef.com/pages/search/search?keyword=" + url.QueryEscape(keyword)
 		//",直接访问此链接即可查看搜索结果:" + ShortUrl("https://gw.icodef.com/pages/search/search?keyword="+url.QueryEscape(keyword))
 		return &db.StringCache{String: ret}, nil
 		//if s, err := GenCopywriting(list); err != nil {
