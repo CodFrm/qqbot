@@ -82,7 +82,7 @@ func reconnect() *gosocketio.Client {
 	if err := c.On("OnFriendMsgs", func(h *gosocketio.Channel, args iotqq.Message) {
 		if _, ok := config.AppConfig.FeatureMap["alimama"]; ok {
 			if _, ok := config.AppConfig.AdminQQMap[args.CurrentPacket.Data.FromUin]; ok {
-				if _, ok := args.CommandMatch("([\\p{Sc}](\\w{8,12})[\\p{Sc}]|http(s|):)"); len(args.CurrentPacket.Data.Content) > 6 && ((ok && args.CurrentPacket.Data.Content[:3] != "淘") || args.CurrentPacket.Data.Content[:4] == "转 ") {
+				if _, ok := args.CommandMatch("([^\\w](\\w{8,12})[^\\w]|http(s|):)"); len(args.CurrentPacket.Data.Content) > 6 && ((ok && args.CurrentPacket.Data.Content[:3] != "淘") || args.CurrentPacket.Data.Content[:4] == "转 ") {
 					if args.CurrentPacket.Data.FromUin != args.CurrentQQ {
 						if err := alimama.Forward(args); err != nil {
 							args.SendMessage(err.Error())

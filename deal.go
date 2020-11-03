@@ -26,9 +26,9 @@ func dealUniversal(args iotqq.Message) bool {
 			args.SendMessage(str + "\n另可以发送'订阅" + cmd[1] + "'来关注本类商品哦\n小程序/APP自助查券和返利https://m3w.cn/tyq")
 		}
 		return true
-	} else if _, ok := args.CommandMatch("([\\p{Sc}](\\w{8,12})[\\p{Sc}])|(.*?\\.jd\\.com\\/)|(.*?\\.(taobao|tmall)\\.com\\/)"); ok {
+	} else if _, ok := args.CommandMatch("([^\\w](\\w{8,12})[^\\w])|(.*?\\.jd\\.com\\/)|(.*?\\.(taobao|tmall)\\.com\\/)"); ok {
 		var tkl *taobaoopen.ConverseTkl
-		ret, tkl, err := alimama.DealTklFl(args.CurrentPacket.Data.Content[3:])
+		ret, tkl, err := alimama.DealTklFl(args.CurrentPacket.Data.Content)
 		if err != nil {
 			if err.Error() == "很抱歉！商品ID解析错误！！！" {
 				args.SendMessage("此商品不支持,无法搜索!")

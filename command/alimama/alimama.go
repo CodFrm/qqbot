@@ -80,14 +80,14 @@ func AddGroup(qqgroup string, rm bool) error {
 }
 
 func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
-	if tkl := utils.RegexMatch(msg, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]"); len(tkl) >= 2 {
+	if tkl := utils.RegexMatch(msg, "[^\\w](\\w{8,12})[^\\w]"); len(tkl) >= 2 {
 		if ret, err := tbfl.ConversionTkl(tkl[1]); err != nil {
 			return msg, nil, err
 		} else {
 			if len(ret.Content) < 1 {
 				return msg, nil, nil
 			}
-			newtkl := utils.RegexMatch(ret.Content[0].Tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
+			newtkl := utils.RegexMatch(ret.Content[0].Tkl, "[^\\w](\\w{8,12})[^\\w]")
 			if len(newtkl) == 2 {
 				msg = strings.ReplaceAll(msg, tkl[1], newtkl[1])
 				re := regexp.MustCompile("(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]")
@@ -114,7 +114,7 @@ func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 				if len(ret.Content) < 1 {
 					continue
 				}
-				newtkl := utils.RegexMatch(ret.Content[0].Tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
+				newtkl := utils.RegexMatch(ret.Content[0].Tkl, "[^\\w](\\w{8,12})[^\\w]")
 				if len(newtkl) == 2 {
 					msg = strings.ReplaceAll(msg, v[0], ret.Content[0].Shorturl)
 					retTkl = ret
@@ -148,7 +148,7 @@ func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 }
 
 func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
-	if tkl := utils.RegexMatch(msg, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]"); len(tkl) >= 2 {
+	if tkl := utils.RegexMatch(msg, "[^\\w](\\w{8,12})[^\\w]"); len(tkl) >= 2 {
 		if ret, err := tb.ConversionTkl(tkl[1]); err != nil {
 			if err.Error() == "很抱歉！商品ID解析错误！！！" {
 				// 获取口令链接和类型,判断是否为活动口令
@@ -170,7 +170,7 @@ func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 					if err != nil {
 						return msg, nil, err
 					}
-					newtkl := utils.RegexMatch(mytkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
+					newtkl := utils.RegexMatch(mytkl, "[^\\w](\\w{8,12})[^\\w]")
 					if len(newtkl) == 2 {
 						msg = strings.ReplaceAll(msg, tkl[1], newtkl[1])
 						re := regexp.MustCompile("(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]")
@@ -195,7 +195,7 @@ func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 			if len(ret.Content) < 1 {
 				return msg, nil, nil
 			}
-			newtkl := utils.RegexMatch(ret.Content[0].Tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
+			newtkl := utils.RegexMatch(ret.Content[0].Tkl, "[^\\w](\\w{8,12})[^\\w]")
 			if len(newtkl) == 2 {
 				msg = strings.ReplaceAll(msg, tkl[1], newtkl[1])
 				re := regexp.MustCompile("(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]")
@@ -290,7 +290,7 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 			if err != nil || tkl == "" {
 				tkl = v.CouponShareUrl
 			}
-			kl := utils.RegexMatch(tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
+			kl := utils.RegexMatch(tkl, "[^\\w](\\w{8,12})[^\\w]")
 			if len(kl) == 2 {
 				tkl = kl[1]
 			}
@@ -304,7 +304,7 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 				if err != nil || tkl == "" {
 					tkl = v.CouponShareUrl
 				}
-				kl := utils.RegexMatch(tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
+				kl := utils.RegexMatch(tkl, "[^\\w](\\w{8,12})[^\\w]")
 				if len(kl) == 2 {
 					tkl = kl[1]
 				}
@@ -314,7 +314,7 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 				if err != nil || tkl == "" {
 					tkl = v.Url
 				}
-				kl := utils.RegexMatch(tkl, "[\\p{Sc}](\\w{8,12})[\\p{Sc}]")
+				kl := utils.RegexMatch(tkl, "[^\\w](\\w{8,12})[^\\w]")
 				if len(kl) == 2 {
 					tkl = kl[1]
 				}
