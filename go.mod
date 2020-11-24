@@ -15,7 +15,6 @@ require (
 	github.com/otiai10/gosseract/v2 v2.2.4
 	github.com/pkumza/numcn v1.0.0
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sbinet/go-python v0.1.0
 	github.com/stretchr/testify v1.6.0
 	gopkg.in/yaml.v2 v2.3.0
 )
