@@ -749,13 +749,13 @@ func hkd(args iotqq.Message, at string, commandstr []string) error {
 }
 
 func SendJoin(c *gosocketio.Client) {
-	log.Println("获取QQ号连接")
-	result, err := c.Ack("GetWebConn", config.AppConfig.QQ, time.Second*5)
-	if err != nil {
-		log.Println(err)
-		c.Close()
-		reconnect()
-	} else {
-		log.Println("emit", result)
-	}
+	//log.Println("获取QQ号连接")
+	//result, err := c.Ack("GetWebConn", config.AppConfig.QQ, time.Second*5)
+	//if err != nil {
+	//	log.Println(err)
+	//	c.Close()
+	//	reconnect()
+	//} else {
+	//	log.Println("emit", result)
+	//}
 }
