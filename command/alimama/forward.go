@@ -3,14 +3,15 @@ package alimama
 import (
 	"encoding/json"
 	"errors"
-	"github.com/CodFrm/iotqq-plugins/db"
-	"github.com/CodFrm/iotqq-plugins/utils"
-	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
-	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/CodFrm/iotqq-plugins/db"
+	"github.com/CodFrm/iotqq-plugins/utils"
+	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
+	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
 )
 
 func ForwardGroup(args iotqq.Message) bool {
@@ -110,19 +111,19 @@ func Forward(args iotqq.Message) error {
 		if tkl != nil && IsTklSend(tkl) {
 			return errors.New("重复发送")
 		}
-		md5 := ""
-		//url := ""
+		//md5 := ""
+		url := ""
 		if pic.FriendPic == nil {
-			md5 = pic.GroupPic[0].FileMd5
-			//url = pic.GroupPic[0].Url
+			//md5 = pic.GroupPic[0].FileMd5
+			url = pic.GroupPic[0].Url
 		} else {
-			md5 = pic.FriendPic[0].FileMd5
-			//url = pic.FriendPic[0].Url
+			//md5 = pic.FriendPic[0].FileMd5
+			url = pic.FriendPic[0].Url
 		}
 		reg := regexp.MustCompile("^(\\d+)")
 		for _, v := range list {
-			iotqq.QueueSendPicMsgByPicMd5(utils.StringToInt(v), 0, reg.ReplaceAllString(pic.Content, "$1[PICFLAG]"), md5)
-			//iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, reg.ReplaceAllString(pic.Content, "$1[PICFLAG]"), url)
+			//iotqq.QueueSendPicMsgByPicMd5(utils.StringToInt(v), 0, reg.ReplaceAllString(pic.Content, "$1[PICFLAG]"), md5)
+			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, reg.ReplaceAllString(pic.Content, "$1[PICFLAG]"), url)
 		}
 		mq.publisher(pic.Content)
 		return nil
