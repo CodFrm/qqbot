@@ -3,7 +3,6 @@ package alimama
 import (
 	"encoding/json"
 	"errors"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -120,10 +119,10 @@ func Forward(args iotqq.Message) error {
 			//md5 = pic.FriendPic[0].FileMd5
 			url = pic.FriendPic[0].Url
 		}
-		reg := regexp.MustCompile("^(\\d+)")
+		//reg := regexp.MustCompile("^(\\d+)")
 		for _, v := range list {
 			//iotqq.QueueSendPicMsgByPicMd5(utils.StringToInt(v), 0, reg.ReplaceAllString(pic.Content, "$1[PICFLAG]"), md5)
-			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, reg.ReplaceAllString(pic.Content, "$1[PICFLAG]"), url)
+			iotqq.QueueSendPicMsg(utils.StringToInt(v), 0, pic.Content, url)
 		}
 		mq.publisher(pic.Content)
 		return nil
