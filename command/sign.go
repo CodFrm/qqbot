@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CodFrm/iotqq-plugins/cqhttp"
-	"github.com/CodFrm/iotqq-plugins/db"
-	"github.com/CodFrm/iotqq-plugins/utils"
+	"github.com/CodFrm/qqbot/cqhttp"
+	"github.com/CodFrm/qqbot/db"
+	"github.com/CodFrm/qqbot/utils"
 	"github.com/go-redis/redis/v7"
 	"github.com/pkumza/numcn"
 	"github.com/robfig/cron/v3"

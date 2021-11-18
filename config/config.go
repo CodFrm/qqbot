@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/CodFrm/iotqq-plugins/utils/jdunion"
-	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
+	"github.com/CodFrm/qqbot/utils/jdunion"
+	"github.com/CodFrm/qqbot/utils/taobaoopen"
 	"gopkg.in/yaml.v2"
 )
 

@@ -1,4 +1,4 @@
-module github.com/CodFrm/iotqq-plugins
+module github.com/CodFrm/qqbot
 
 go 1.13
 

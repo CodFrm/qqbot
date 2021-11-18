@@ -2,8 +2,8 @@ package command
 
 import (
 	"context"
-	"github.com/CodFrm/iotqq-plugins/config"
-	"github.com/CodFrm/iotqq-plugins/db"
+	"github.com/CodFrm/qqbot/config"
+	"github.com/CodFrm/qqbot/db"
 	"github.com/mzz2017/shadowsocksR/client"
 	pxy "github.com/nadoo/glider/proxy"
 	"github.com/robfig/cron/v3"

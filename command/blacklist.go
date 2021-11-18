@@ -2,7 +2,7 @@ package command
 
 import (
 	"errors"
-	"github.com/CodFrm/iotqq-plugins/db"
+	"github.com/CodFrm/qqbot/db"
 	"strconv"
 	"time"
 )

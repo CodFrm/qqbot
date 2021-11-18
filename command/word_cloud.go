@@ -2,9 +2,9 @@ package command
 
 import (
 	"bytes"
-	"github.com/CodFrm/iotqq-plugins/config"
-	"github.com/CodFrm/iotqq-plugins/utils"
-	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
+	"github.com/CodFrm/qqbot/config"
+	"github.com/CodFrm/qqbot/utils"
+	"github.com/CodFrm/qqbot/utils/iotqq"
 	"io/ioutil"
 	"log"
 	"os"

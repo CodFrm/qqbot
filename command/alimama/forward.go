@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CodFrm/iotqq-plugins/db"
-	"github.com/CodFrm/iotqq-plugins/utils"
-	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
-	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
+	"github.com/CodFrm/qqbot/db"
+	"github.com/CodFrm/qqbot/utils"
+	"github.com/CodFrm/qqbot/utils/iotqq"
+	"github.com/CodFrm/qqbot/utils/taobaoopen"
 )
 
 func ForwardGroup(args iotqq.Message) bool {

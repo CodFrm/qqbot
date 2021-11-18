@@ -2,12 +2,12 @@ package alimama
 
 import (
 	"fmt"
-	"github.com/CodFrm/iotqq-plugins/config"
-	"github.com/CodFrm/iotqq-plugins/db"
-	"github.com/CodFrm/iotqq-plugins/utils"
-	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
-	"github.com/CodFrm/iotqq-plugins/utils/jdunion"
-	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
+	"github.com/CodFrm/qqbot/config"
+	"github.com/CodFrm/qqbot/db"
+	"github.com/CodFrm/qqbot/utils"
+	"github.com/CodFrm/qqbot/utils/iotqq"
+	"github.com/CodFrm/qqbot/utils/jdunion"
+	"github.com/CodFrm/qqbot/utils/taobaoopen"
 	"net/url"
 	"regexp"
 	"strconv"

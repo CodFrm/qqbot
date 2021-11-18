@@ -1,7 +1,7 @@
 package command
 
 import (
-	"github.com/CodFrm/iotqq-plugins/model"
+	"github.com/CodFrm/qqbot/model"
 	"testing"
 )
 

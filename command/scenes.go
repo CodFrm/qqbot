@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/CodFrm/iotqq-plugins/db"
-	"github.com/CodFrm/iotqq-plugins/model"
+	"github.com/CodFrm/qqbot/db"
+	"github.com/CodFrm/qqbot/model"
 	"github.com/go-redis/redis/v7"
 )
 

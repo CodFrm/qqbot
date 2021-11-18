@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
+	"github.com/CodFrm/qqbot/utils/iotqq"
 )
 
 func HandlerXmlMsg(args iotqq.Message) {

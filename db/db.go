@@ -2,7 +2,7 @@ package db
 
 import (
 	"fmt"
-	"github.com/CodFrm/iotqq-plugins/config"
+	"github.com/CodFrm/qqbot/config"
 	goRedis "github.com/go-redis/redis/v7"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"

@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/CodFrm/iotqq-plugins/cqhttp"
-	transition "github.com/CodFrm/iotqq-plugins/live/ffmpeg"
+	"github.com/CodFrm/qqbot/cqhttp"
+	transition "github.com/CodFrm/qqbot/live/ffmpeg"
 	"github.com/golang/glog"
 	rtmp "github.com/zhangpeihao/gortmp"
 )

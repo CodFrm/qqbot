@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CodFrm/iotqq-plugins/config"
-	"github.com/CodFrm/iotqq-plugins/db"
+	"github.com/CodFrm/qqbot/config"
+	"github.com/CodFrm/qqbot/db"
 )
 
 var url1, qq string

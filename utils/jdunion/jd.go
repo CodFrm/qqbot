@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/CodFrm/iotqq-plugins/utils"
+	"github.com/CodFrm/qqbot/utils"
 	"io/ioutil"
 	"net/http"
 	"net/url"

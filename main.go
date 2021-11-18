@@ -7,13 +7,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/CodFrm/iotqq-plugins/command"
-	"github.com/CodFrm/iotqq-plugins/command/alimama"
-	"github.com/CodFrm/iotqq-plugins/config"
-	"github.com/CodFrm/iotqq-plugins/cqhttp"
-	"github.com/CodFrm/iotqq-plugins/db"
-	"github.com/CodFrm/iotqq-plugins/live"
-	"github.com/CodFrm/iotqq-plugins/utils"
+	"github.com/CodFrm/qqbot/command"
+	"github.com/CodFrm/qqbot/command/alimama"
+	"github.com/CodFrm/qqbot/config"
+	"github.com/CodFrm/qqbot/cqhttp"
+	"github.com/CodFrm/qqbot/db"
+	"github.com/CodFrm/qqbot/live"
+	"github.com/CodFrm/qqbot/utils"
 	"github.com/golang/glog"
 )
 

@@ -2,11 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/CodFrm/iotqq-plugins/command/alimama"
-	"github.com/CodFrm/iotqq-plugins/config"
-	"github.com/CodFrm/iotqq-plugins/utils"
-	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
-	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
+	"github.com/CodFrm/qqbot/command/alimama"
+	"github.com/CodFrm/qqbot/config"
+	"github.com/CodFrm/qqbot/utils"
+	"github.com/CodFrm/qqbot/utils/iotqq"
+	"github.com/CodFrm/qqbot/utils/taobaoopen"
 	"log"
 )
 

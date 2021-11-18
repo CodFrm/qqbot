@@ -2,9 +2,9 @@ package command
 
 import (
 	"encoding/json"
-	"github.com/CodFrm/iotqq-plugins/config"
-	"github.com/CodFrm/iotqq-plugins/db"
-	"github.com/CodFrm/iotqq-plugins/model"
+	"github.com/CodFrm/qqbot/config"
+	"github.com/CodFrm/qqbot/db"
+	"github.com/CodFrm/qqbot/model"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

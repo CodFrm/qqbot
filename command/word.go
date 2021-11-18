@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CodFrm/iotqq-plugins/cqhttp"
-	"github.com/CodFrm/iotqq-plugins/db"
-	"github.com/CodFrm/iotqq-plugins/utils"
+	"github.com/CodFrm/qqbot/cqhttp"
+	"github.com/CodFrm/qqbot/db"
+	"github.com/CodFrm/qqbot/utils"
 	"github.com/otiai10/gosseract/v2"
 )
 

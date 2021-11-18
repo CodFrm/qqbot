@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/CodFrm/iotqq-plugins/config"
+	"github.com/CodFrm/qqbot/config"
 )
 
 func Post(api string, m map[string]interface{}) ([]byte, error) {

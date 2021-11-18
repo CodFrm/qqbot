@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/CodFrm/iotqq-plugins/db"
-	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
+	"github.com/CodFrm/qqbot/db"
+	"github.com/CodFrm/qqbot/utils/iotqq"
 )
 
 type publisher struct {

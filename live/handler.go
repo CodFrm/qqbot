@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/CodFrm/iotqq-plugins/cqhttp"
+	"github.com/CodFrm/qqbot/cqhttp"
 	"github.com/golang/glog"
 	"github.com/zhangpeihao/goflv"
 	rtmp "github.com/zhangpeihao/gortmp"

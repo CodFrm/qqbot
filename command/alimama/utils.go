@@ -1,8 +1,8 @@
 package alimama
 
 import (
-	"github.com/CodFrm/iotqq-plugins/config"
-	"github.com/CodFrm/iotqq-plugins/utils"
+	"github.com/CodFrm/qqbot/config"
+	"github.com/CodFrm/qqbot/utils"
 	"net/url"
 )
 

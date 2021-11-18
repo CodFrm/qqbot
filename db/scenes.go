@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/CodFrm/iotqq-plugins/model"
+	"github.com/CodFrm/qqbot/model"
 	"github.com/jinzhu/gorm"
 )
 
