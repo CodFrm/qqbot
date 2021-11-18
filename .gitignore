@@ -4,6 +4,7 @@ iotqq-plugins
 config.yaml
 data/*.jpg
 data/group
+data/live
 
 .idea
 .vscode

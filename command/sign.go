@@ -3,19 +3,20 @@ package command
 import (
 	"encoding/json"
 	"errors"
-	"github.com/CodFrm/iotqq-plugins/db"
-	"github.com/CodFrm/iotqq-plugins/utils"
-	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
-	"github.com/go-redis/redis/v7"
-	"github.com/pkumza/numcn"
-	"github.com/robfig/cron/v3"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/CodFrm/iotqq-plugins/cqhttp"
+	"github.com/CodFrm/iotqq-plugins/db"
+	"github.com/CodFrm/iotqq-plugins/utils"
+	"github.com/go-redis/redis/v7"
+	"github.com/pkumza/numcn"
+	"github.com/robfig/cron/v3"
 )
 
-var RewardsMap = map[string]func(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string){
+var RewardsMap = map[string]func(group, channel, qq int64, rewards bool, day time.Time, continuous int, args ...string){
 	"设置名片": rewardGroupName, "nmsl": rewardNmsl,
 	"nmsl单词特供版": rewardNmsl2, "踢出本群": rewardKick,
 	"温柔词典": rewardRainbowFart,
@@ -28,6 +29,7 @@ func SignInit() {
 	c := cron.New(cron.WithSeconds())
 	c.AddFunc("0 0 7 * * ?", everyDay)
 	c.AddFunc("0 0/15 * * * ?", scanSite)
+	// 单词群 通知我
 	c.AddFunc("0 0 20 * * ?", remind)
 	c.Start()
 	rand.Seed(time.Now().UnixNano())
@@ -56,8 +58,8 @@ func SignInit() {
 阿巴阿巴阿巴阿巴阿巴阿巴阿巴阿巴阿巴阿巴阿巴`, "\n")
 }
 
-func Sign(qqgroup int, qq int64) (string, error) {
-	key := "sign:day:" + strconv.Itoa(qqgroup) + ":"
+func Sign(group int64, channel, qq int64) (string, error) {
+	key := "sign:day:" + strconv.FormatInt(group, 10) + ":" + strconv.FormatInt(channel, 10)
 	val, err := db.Redis.HGet(key+time.Now().Format("2006:01:02"), strconv.FormatInt(qq, 10)).Result()
 	if err != nil && err != redis.Nil {
 		return "", err
@@ -65,7 +67,7 @@ func Sign(qqgroup int, qq int64) (string, error) {
 	if val == "1" {
 		return "", errors.New("今天签过到了")
 	}
-	autoAddReward(strconv.Itoa(qqgroup), qq)
+	autoAddReward(group, channel, qq)
 	if err := db.Redis.HSet(key+time.Now().Format("2006:01:02"), qq, "1").Err(); err != nil {
 		return "", err
 	}
@@ -73,15 +75,17 @@ func Sign(qqgroup int, qq int64) (string, error) {
 	if val, err := db.Redis.HGet(key+time.Now().Add(-time.Hour*24).Format("2006:01:02"), strconv.FormatInt(qq, 10)).Result(); err != nil && err != redis.Nil {
 		return "", err
 	} else if val == "1" {
-		continuous = int(db.Redis.HIncrBy("sign:record:"+strconv.Itoa(qqgroup), strconv.FormatInt(qq, 10), 1).Val())
+		continuous = int(db.Redis.HIncrBy("sign:record:"+strconv.FormatInt(group, 10)+":"+strconv.FormatInt(channel, 10), strconv.FormatInt(qq, 10), 1).Val())
 	} else {
 		continuous = 1
-		db.Redis.HSet("sign:record:"+strconv.Itoa(qqgroup), qq, 1)
+		db.Redis.HSet("sign:record:"+strconv.FormatInt(group, 10)+":"+strconv.FormatInt(channel, 10), qq, 1)
 	}
 	db.Redis.Expire(key+time.Now().Format("2006:01:02"), time.Hour*72)
-	go execRewards(qqgroup, qq, true, time.Now(), continuous)
-	db.Redis.HSet("sign:group:record:"+time.Now().Format("2006:01:02"), strconv.Itoa(qqgroup), "1")
-	db.Redis.HSet("sign:end:record:"+strconv.Itoa(qqgroup), qq, time.Now().Format("2006:01:02"))
+	go execRewards(group, channel, qq, true, time.Now(), continuous)
+	db.Redis.HSet("sign:group:record:"+time.Now().Format("2006:01:02"),
+		strconv.FormatInt(group, 10)+":"+strconv.FormatInt(channel, 10), "1")
+	db.Redis.HSet("sign:end:record:"+strconv.FormatInt(group, 10)+":"+strconv.FormatInt(channel, 10),
+		qq, time.Now().Format("2006:01:02"))
 	return "打卡成功,你连续打卡了" + numcn.EncodeFromInt64(int64(continuous)) + "天", nil
 }
 
@@ -89,8 +93,8 @@ func SetContinuousDay(qqgroup int, qq int64, day int) error {
 	return db.Redis.HSet("sign:record:"+strconv.Itoa(qqgroup), strconv.FormatInt(qq, 10), strconv.Itoa(day)).Err()
 }
 
-func IsSign(qqgroup int, qq int64) bool {
-	key := "sign:day:" + strconv.Itoa(qqgroup) + ":"
+func IsSign(qqgroup, channel, qq int64) bool {
+	key := "sign:day:" + strconv.FormatInt(qqgroup, 10) + ":" + strconv.FormatInt(channel, 10)
 	val, err := db.Redis.HGet(key+time.Now().Format("2006:01:02"), strconv.FormatInt(qq, 10)).Result()
 	if err != nil && err != redis.Nil {
 		return false
@@ -101,10 +105,10 @@ func IsSign(qqgroup int, qq int64) bool {
 	return false
 }
 
-func autoAddReward(group string, qq int64) {
-	list, _ := GetRewards("group"+group, 8888)
+func autoAddReward(group, channel int64, qq int64) {
+	list, _ := GetRewards(group, channel, 8888)
 	for _, v := range list {
-		list, _ := GetRewards(group, qq)
+		list, _ := GetRewards(group, channel, qq)
 		flag := false
 		for _, v2 := range list {
 			if v2.Command == v.Command {
@@ -113,7 +117,7 @@ func autoAddReward(group string, qq int64) {
 			}
 		}
 		if !flag {
-			SetRewards(group, qq, false, v.Command, v.Args...)
+			SetRewards(group, channel, qq, false, v.Command, v.Args...)
 		}
 	}
 }
@@ -130,35 +134,39 @@ func everyDay() {
 	for group := range list {
 		qqs := db.Redis.HGetAll("sign:end:record:" + group).Val()
 		for qq, val := range qqs {
-			igroup, iqq := utils.StringToInt(group), utils.StringToInt64(qq)
-			if ok, err := iotqq.IsInGroup(igroup, iqq); err != nil {
-				continue
-			} else if !ok {
-				delSign(igroup, iqq)
+			s := strings.Split(group, ":")
+			if len(s) != 2 {
 				continue
 			}
+			igroup, ichannel, iqq := utils.StringToInt64(s[0]), utils.StringToInt64(s[1]), utils.StringToInt64(qq)
+			//if ok, err := iotqq.IsInGroup(igroup, ichannel, iqq); err != nil {
+			//	continue
+			//} else if !ok {
+			//	delSign(igroup, ichannel, iqq)
+			//	continue
+			//}
 			if val != day && val != time.Now().Format("2006:01:02") {
 				//惩罚
 				t, _ := time.Parse("2006:01:02", val)
-				go execRewards(utils.StringToInt(group), utils.StringToInt64(qq), false, t, 0)
+				go execRewards(igroup, ichannel, iqq, false, t, 0)
 			}
 		}
 	}
 }
 
-func AdminGroupReward(qqgroup string, rm bool, command string, args ...string) error {
-	if err := SetRewards("group"+qqgroup, 8888, rm, command, args...); err != nil {
+func AdminGroupReward(qqgroup, channel int64, rm bool, command string, args ...string) error {
+	if err := SetRewards(qqgroup, channel, 8888, rm, command, args...); err != nil {
 		return err
 	}
-	list := db.Redis.HGetAll("sign:end:record:" + qqgroup).Val()
+	list := db.Redis.HGetAll("sign:end:record:" + strconv.FormatInt(qqgroup, 10) + ":" + strconv.FormatInt(channel, 10)).Val()
 	for k := range list {
-		autoAddReward(qqgroup, utils.StringToInt64(k))
+		autoAddReward(qqgroup, channel, utils.StringToInt64(k))
 	}
 	return nil
 }
 
-func SetRewards(qqgroup string, qq int64, rm bool, command string, args ...string) error {
-	rs, err := GetRewards(qqgroup, qq)
+func SetRewards(group, channel, qq int64, rm bool, command string, args ...string) error {
+	rs, err := GetRewards(group, channel, qq)
 	if err != nil {
 		return err
 	}
@@ -193,12 +201,12 @@ func SetRewards(qqgroup string, qq int64, rm bool, command string, args ...strin
 	if err != nil {
 		return err
 	}
-	key := "sign:rewards:" + qqgroup
+	key := "sign:rewards:" + strconv.FormatInt(group, 10) + ":" + strconv.FormatInt(channel, 10)
 	return db.Redis.HSet(key, strconv.FormatInt(qq, 10), s).Err()
 }
 
-func GetRewards(qqgroup string, qq int64) ([]*Reward, error) {
-	key := "sign:rewards:" + qqgroup
+func GetRewards(qqgroup, channel int64, qq int64) ([]*Reward, error) {
+	key := "sign:rewards:" + strconv.FormatInt(qqgroup, 10) + ":" + strconv.FormatInt(channel, 10)
 	val, err := db.Redis.HGet(key, strconv.FormatInt(qq, 10)).Result()
 	if err != nil && err != redis.Nil {
 		return nil, err
@@ -213,17 +221,17 @@ func GetRewards(qqgroup string, qq int64) ([]*Reward, error) {
 	return rs, nil
 }
 
-func execRewards(qqgroup int, qq int64, rewards bool, day time.Time, continuous int) {
-	list, _ := GetRewards(strconv.Itoa(qqgroup), qq)
+func execRewards(group, channel, qq int64, rewards bool, day time.Time, continuous int) {
+	list, _ := GetRewards(group, channel, qq)
 	for _, v := range list {
 		f := RewardsMap[v.Command]
 		if f != nil {
-			f(qqgroup, qq, rewards, day, continuous, v.Args...)
+			f(group, channel, qq, rewards, day, continuous, v.Args...)
 		}
 	}
 }
 
-func rewardGroupName(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
+func rewardGroupName(group, channel int64, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
 	if len(args) < 1 {
 		return
 	}
@@ -235,52 +243,65 @@ func rewardGroupName(group int, qq int64, rewards bool, day time.Time, continuou
 	}
 	s := strings.Join(args, " ")
 	s = strings.Replace(s, "N", numcn.EncodeFromInt64(int64(continuous)), 1)
-	iotqq.ModifyGroupCard(group, qq, s)
-	time.Sleep(time.Second * 2)
-	iotqq.SendMsg(group, qq, "奖励你新id:"+s)
+	// 修改群卡片
+	if channel == 0 {
+		//iotqq.ModifyGroupCard(group,channel, qq, s)
+		time.Sleep(time.Second * 2)
+		//iotqq.SendMsg(group, qq, "奖励你新id:"+s)
+	} else {
+		cqhttp.SendGuildChannelMsg(group, channel, "奖励你新id:"+s)
+	}
 }
 
-func rewardNmsl(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
+func rewardNmsl(group, channel, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
 	if continuous > 0 || rewards {
 		return
 	}
-	iotqq.QueueSendMsg(group, qq, utils.Nmsl())
+	if channel == 0 {
+		//iotqq.QueueSendMsg(group, qq, utils.Nmsl())
+	} else {
+		cqhttp.SendGuildChannelMsg(group, channel, "[CQ:at,qq="+strconv.FormatInt(qq, 10)+"]"+utils.Nmsl())
+	}
 }
 
 //英语特供版
-func rewardNmsl2(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
+func rewardNmsl2(group, channel, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
 	if rewards {
 		return
 	}
-	if rand.Intn(100) < 2 {
-		str := utils.FileBase64("./data/img/3.jpg")
-		iotqq.SendPicByBase64(group, qq, "你读个鬼书", str)
-		return
+	//if rand.Intn(100) < 2 {
+	//	str := utils.FileBase64("./data/img/3.jpg")
+	//	iotqq.SendPicByBase64(group, qq, "你读个鬼书", str)
+	//	return
+	//}
+	if channel == 0 {
+		//iotqq.QueueSendMsg(group, qq, strings.ReplaceAll(nmslEnglish[rand.Intn(len(nmslEnglish))], "妈", "🐴"))
+	} else {
+		cqhttp.SendGuildChannelMsg(group, channel, "[CQ:at,qq="+strconv.FormatInt(qq, 10)+"]"+strings.ReplaceAll(nmslEnglish[rand.Intn(len(nmslEnglish))], "妈", "🐴"))
 	}
-	iotqq.QueueSendMsg(group, qq, strings.ReplaceAll(nmslEnglish[rand.Intn(len(nmslEnglish))], "妈", "🐴"))
 }
 
-func rewardKick(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
+func rewardKick(group, channel, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
 	if rewards {
 		return
 	}
 	t := time.Now().Sub(day)
 	d := t.Hours() / 24
 	if d >= 3 {
-		iotqq.QueueSendMsg(group, qq, "超过3天未打卡,将自动移除本群")
-		delSign(group, qq)
-		iotqq.Kick(group, qq)
+		//iotqq.QueueSendMsg(group, qq, "超过3天未打卡,将自动移除本群")
+		//delSign(group, qq)
+		//iotqq.Kick(group, qq)
 		return
 	}
-	iotqq.QueueSendMsg(group, qq, "提示:超过3天未打卡,将自动移除本群")
+	//iotqq.QueueSendMsg(group, qq, "提示:超过3天未打卡,将自动移除本群")
 }
 
-func delSign(group int, qq int64) {
-	db.Redis.HDel("sign:end:record:"+strconv.Itoa(group), strconv.FormatInt(qq, 10))
+func delSign(group, channel, qq int64) {
+	db.Redis.HDel("sign:end:record:"+strconv.FormatInt(group, 10)+":"+strconv.FormatInt(channel, 10), strconv.FormatInt(qq, 10))
 }
 
-func rewardRainbowFart(group int, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
-	iotqq.QueueSendMsg(group, qq, rainbowFart[rand.Intn(len(rainbowFart))])
+func rewardRainbowFart(group, channel, qq int64, rewards bool, day time.Time, continuous int, args ...string) {
+	//iotqq.QueueSendMsg(group, qq, rainbowFart[rand.Intn(len(rainbowFart))])
 }
 
 func remind() {
@@ -288,15 +309,22 @@ func remind() {
 	key := "sign:group:record:" + day
 	list := db.Redis.HGetAll(key).Val()
 	for group := range list {
-		groupid, _ := strconv.Atoi(group)
-		if ok := IsWordGroup(groupid); !ok {
+		s := strings.Split(group, ":")
+		if len(s) != 2 {
+			continue
+		}
+		groupid, channel := utils.StringToInt64(s[0]), utils.StringToInt64(s[1])
+		if ok := IsWordGroup(groupid, channel); !ok {
 			continue
 		}
 		qqs := db.Redis.HGetAll("sign:end:record:" + group).Val()
 		for qq, val := range qqs {
 			if val == time.Now().Add(-time.Hour*24).Format("2006:01:02") {
 				//昨天签到了,今天还没
-				iotqq.QueueSendMsg(utils.StringToInt(group), utils.StringToInt64(qq), "背单词啦!!!")
+				if channel == 0 {
+					cqhttp.SendGuildChannelMsg(groupid, channel, "[CQ:at,qq="+qq+"]"+"背单词啦!!!")
+				}
+				//iotqq.QueueSendMsg(utils.StringToInt(group), utils.StringToInt64(qq), "背单词啦!!!")
 			}
 		}
 	}

@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
+
 	"github.com/CodFrm/iotqq-plugins/utils/jdunion"
 	"github.com/CodFrm/iotqq-plugins/utils/taobaoopen"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 )
 
 type Config struct {
@@ -23,6 +24,8 @@ type Config struct {
 	ManageGroupMap map[int]struct{}
 	AdminQQ        []int64 `yaml:"admin-qq"`
 	AdminQQMap     map[int64]struct{}
+	GuildAdmin     []int64 `yaml:"guild-admin"`
+	GuildAdminMap  map[int64]struct{}
 	Feature        []string
 	FeatureMap     map[string]struct{}
 	Taobao         taobaoopen.TaobaoConfig
@@ -70,6 +73,10 @@ func Init(filename string) error {
 	AppConfig.FeatureMap = make(map[string]struct{})
 	for _, v := range AppConfig.Feature {
 		AppConfig.FeatureMap[v] = struct{}{}
+	}
+	AppConfig.GuildAdminMap = make(map[int64]struct{})
+	for _, v := range AppConfig.GuildAdmin {
+		AppConfig.GuildAdminMap[v] = struct{}{}
 	}
 	return nil
 }

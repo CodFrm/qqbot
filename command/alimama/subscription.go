@@ -1,10 +1,11 @@
 package alimama
 
 import (
-	"github.com/CodFrm/iotqq-plugins/db"
-	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 	"strconv"
 	"strings"
+
+	"github.com/CodFrm/iotqq-plugins/db"
+	"github.com/CodFrm/iotqq-plugins/utils/iotqq"
 )
 
 type publisher struct {
