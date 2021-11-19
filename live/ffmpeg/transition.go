@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,7 +14,10 @@ import (
 
 func ToFlv(infile, outfile string, progress chan float32) error {
 	//开始执行命令
+	infile, _ = filepath.Abs(infile)
+	outfile, _ = filepath.Abs(outfile)
 	cmd := exec.Command("ffmpeg", "-i", infile, "-vcodec", "libx264", "-f", "flv", "-y", outfile)
+	glog.Infof("exec command: %v", cmd.String())
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
 		return err

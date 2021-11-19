@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"strings"
 
 	"github.com/CodFrm/qqbot/command"
 	"github.com/CodFrm/qqbot/command/alimama"
@@ -150,7 +149,7 @@ func private(msg *cqhttp.MessageModel) {
 		s, _ := url.PathUnescape(args[5])
 		if err := live.AddLive(
 			utils.StringToInt64(args[1]), utils.StringToInt64(args[2]), utils.StringToInt64(args[3]),
-			args[4], strings.ReplaceAll(s, "&amp;", "&"),
+			args[4], s,
 		); err != nil {
 			sendErr(msg, err)
 		} else {

@@ -1,5 +1,7 @@
 package cqhttp
 
+import "html"
+
 //map[font:0 message:123 message_id:-1.883559911e+09 message_type:private post_type:message raw_message:123 self_id:3.308923602e+09
 //sender:map[age:0 nickname:mhsj sex:unknown user_id:9.58139621e+08] sub_type:friend target_id:3.308923602e+09 time:1.637241196e+09 user_id:9.58139621e+08]
 
@@ -18,7 +20,7 @@ func (p *PrivateMsg) Self() int64 {
 }
 
 func (p *PrivateMsg) Message() string {
-	return p.Message_
+	return html.UnescapeString(p.Message_)
 }
 
 func (p *PrivateMsg) Time() int64 {

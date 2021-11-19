@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/CodFrm/qqbot/config"
@@ -38,7 +37,6 @@ func DefaultRpc() rpc.Client {
 //h-Dest: document","Referer: https://www.aliyundrive.com/","Accept-Encoding: gzip, deflate, br","Accept-Language: zh-CN,zh;q=0.9"]}]}
 
 func Download(uri, platform, dir string) (string, error) {
-	uri = strings.ReplaceAll(uri, "&amp;", "&")
 	param := map[string]interface{}{}
 	if platform == "阿里云盘" {
 		param["header"] = []string{
@@ -58,7 +56,7 @@ func Download(uri, platform, dir string) (string, error) {
 		}
 	}
 	dir, _ = filepath.Abs(dir)
-	param["dir"] = "/download"
+	param["dir"] = dir
 	glog.Infof("download file %v %+v", uri, param)
 	return defaultRpc.AddURI([]string{uri}, param)
 }

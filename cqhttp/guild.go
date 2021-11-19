@@ -1,6 +1,9 @@
 package cqhttp
 
-import "strconv"
+import (
+	"html"
+	"strconv"
+)
 
 //map[channel_id:1.264896e+06 guild_id:3.5346341636528596e+16 message:123 message_id:272-451882151 message_type:guild post_type:message
 //self_id:3.308923602e+09 self_tiny_id:1.4411521867741216e+17 sender:map[nickname:日落 user_id:1.4411521867809888e+17] sub_type:channel time:1.63724038e+09 user_id:1.4411521867809888e+17]
@@ -23,7 +26,7 @@ func (g *GuildMsg) Self() int64 {
 }
 
 func (g *GuildMsg) Message() string {
-	return g.Message_
+	return html.UnescapeString(g.Message_)
 }
 func (g *GuildMsg) Time() int64 {
 	return g.Time_
