@@ -69,11 +69,6 @@ func (c *Client) Start() error {
 }
 
 func (c *Client) handlerMessage(message []byte, m map[string]interface{}) {
-	defer func() {
-		if r := recover(); r != nil {
-			glog.Errorf("handlerMessage: %v", r)
-		}
-	}()
 	v, ok := m["message_type"].(string)
 	if !ok {
 		return

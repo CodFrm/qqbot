@@ -13,6 +13,7 @@ import (
 	"github.com/CodFrm/qqbot/cqhttp"
 	"github.com/CodFrm/qqbot/db"
 	"github.com/CodFrm/qqbot/live"
+	"github.com/CodFrm/qqbot/live/aria2"
 	"github.com/CodFrm/qqbot/utils"
 	"github.com/golang/glog"
 )
@@ -23,6 +24,7 @@ func main() {
 	if err := config.Init("config.yaml"); err != nil {
 		log.Fatal(err)
 	}
+	aria2.DefaultRpc()
 	if err := db.Init(); err != nil {
 		log.Fatal(err)
 	}
@@ -54,9 +56,14 @@ func main() {
 
 }
 
-// 打卡;查看video;查看可推流video;播放(file);转码(file);转码进度;
+// 查看当前频道id;打卡;查看video;查看可推流video;
+// 播放(file);播放队列;添加到播放队列(file);
+// 转码(file);转码进度;
+// 直链下载到待转码 (url) (param);直链下载到可推流 (url) (param);
 func guild(msg *cqhttp.MessageModel) {
-	if _, ok := msg.CommandMatch("^打卡$"); ok {
+	if _, ok := msg.CommandMatch("^查看当前频道id$"); ok {
+		msg.ReplyText(fmt.Sprintf("guild: %v channel: %v user: %v", msg.Group(), msg.Message.(*cqhttp.GuildMsg).ChannelId, msg.Sender().UserId))
+	} else if _, ok := msg.CommandMatch("^打卡$"); ok {
 		if str, err := command.Sign(msg.Group(), msg.Message.(*cqhttp.GuildMsg).ChannelId, msg.Sender().UserId); err != nil {
 			sendErr(msg, err)
 		} else {
@@ -92,6 +99,18 @@ func guild(msg *cqhttp.MessageModel) {
 		} else {
 			msg.ReplyText("播放成功,请查看效果")
 		}
+	} else if args, ok := msg.CommandMatch("^播放队列$"); ok {
+		if err := live.Play(msg.Group(), msg.Message.(*cqhttp.GuildMsg).ChannelId, msg.Sender().UserId, args[1]); err != nil {
+			sendErr(msg, err)
+		} else {
+			msg.ReplyText("播放成功,请查看效果")
+		}
+	} else if args, ok := msg.CommandMatch("^添加到播放队列(.*?)"); ok {
+		if err := live.Play(msg.Group(), msg.Message.(*cqhttp.GuildMsg).ChannelId, msg.Sender().UserId, args[1]); err != nil {
+			sendErr(msg, err)
+		} else {
+			msg.ReplyText("播放成功,请查看效果")
+		}
 	} else if _, ok := msg.CommandMatch("^转码进度$"); ok {
 		msg.ReplyText(live.TrProgress())
 	} else if args, ok := msg.CommandMatch("^转码(.*?)$"); ok {
@@ -100,18 +119,30 @@ func guild(msg *cqhttp.MessageModel) {
 		} else {
 			msg.ReplyText("转码中,输入\"转码进度\"查看进度")
 		}
-	} else if args, ok := msg.CommandMatch("^直链下载代转码 (.*?) (.*?)$"); ok {
-
-		msg.ReplyText(args[2] + "下载失败,还不支持")
+	} else if args, ok := msg.CommandMatch("^直链下载到待转码 (.*?) (.*?)$"); ok {
+		if err := live.DownloadToSource(msg.Group(), msg.Message.(*cqhttp.GuildMsg).ChannelId, msg.Sender().UserId, args[1], args[2]); err != nil {
+			sendErr(msg, err)
+		} else {
+			msg.ReplyText("下载中...请等待")
+		}
 	} else if args, ok := msg.CommandMatch("^直链下载到可推流 (.*?) (.*?)$"); ok {
-
-		msg.ReplyText(args[2] + "下载失败,还不支持")
+		if err := live.DownloadToFlv(msg.Group(), msg.Message.(*cqhttp.GuildMsg).ChannelId, msg.Sender().UserId, args[1], args[2]); err != nil {
+			sendErr(msg, err)
+		} else {
+			msg.ReplyText("下载中...请等待")
+		}
+	} else if _, ok := msg.CommandMatch("^查看下载进度$"); ok {
+		if list, err := aria2.DownloadList(); err != nil {
+			sendErr(msg, err)
+		} else {
+			msg.ReplyText("\n" + list.Table())
+		}
 	}
 	return
 }
 
 func private(msg *cqhttp.MessageModel) {
-	if _, ok := config.AppConfig.AdminQQMap[msg.Self()]; !ok {
+	if _, ok := config.AppConfig.AdminQQMap[msg.Sender().UserId]; !ok {
 		return
 	}
 	if args, ok := msg.CommandMatch("^帮(\\d+):(\\d+):(\\d+)推流 (.*?) (.*?)$"); ok {

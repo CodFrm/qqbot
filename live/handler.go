@@ -2,6 +2,7 @@ package live
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
@@ -12,7 +13,11 @@ import (
 )
 
 type live struct {
-	ctx                          context.Context
+	ctx context.Context
+
+	url    string
+	secret string
+
 	cancel                       context.CancelFunc
 	guild                        int64
 	channel                      int64
@@ -22,15 +27,33 @@ type live struct {
 	conn                         rtmp.OutboundConn
 	status                       uint
 	videoDataSize, audioDataSize int64
+	playqueue                    []string
 }
 
-func newLive(guild, channel, user int64) *live {
-	return &live{
+func newLive(guild, channel, user int64, url, secret string) *live {
+	live := &live{
+		url:              url,
+		secret:           secret,
 		guild:            guild,
 		channel:          channel,
 		user:             user,
-		createStreamChan: make(chan rtmp.OutboundStream),
+		createStreamChan: make(chan rtmp.OutboundStream, 100),
+		playqueue:        make([]string, 0),
 	}
+
+	return live
+}
+
+func (h *live) connect() error {
+	h.createStreamChan = make(chan rtmp.OutboundStream, 100)
+	client, err := rtmp.Dial(h.url, h, 100)
+	if err != nil {
+		return err
+	}
+	if err := client.Connect(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (h *live) Close() {
@@ -55,7 +78,13 @@ func (h *live) OnReceivedRtmpCommand(conn rtmp.Conn, command *rtmp.Command) {
 
 func (h *live) OnClosed(conn rtmp.Conn) {
 	glog.Infof("OnClose: %v", h.user)
-	cqhttp.SendGuildChannelMsg(h.guild, h.channel, "[CQ,at="+strconv.FormatInt(h.user, 10)+"]推流失败")
+	cqhttp.SendGuildChannelMsg(h.guild, h.channel, "[CQ,at="+strconv.FormatInt(h.user, 10)+"] 推流结束")
+	h.conn = nil
+	h.stream = nil
+	if h.cancel != nil {
+		h.cancel()
+		h.cancel = nil
+	}
 }
 
 func (h *live) OnStatus(obConn rtmp.OutboundConn) {
@@ -65,8 +94,11 @@ func (h *live) OnStatus(obConn rtmp.OutboundConn) {
 }
 
 func (h *live) OnStreamCreated(obConn rtmp.OutboundConn, stream rtmp.OutboundStream) {
-	h.createStreamChan <- stream
 	h.conn = obConn
+	stream.Attach(h)
+	if err := stream.Publish(h.secret, "live"); err != nil {
+		cqhttp.SendGuildChannelMsg(h.guild, h.channel, "[CQ,at="+strconv.FormatInt(h.user, 10)+"] 推流失败:"+err.Error())
+	}
 }
 
 func (h *live) OnPlayStart(stream rtmp.OutboundStream) {
@@ -76,20 +108,44 @@ func (h *live) OnPlayStart(stream rtmp.OutboundStream) {
 func (h *live) OnPublishStart(stream rtmp.OutboundStream) {
 	glog.Infof("OnPublishStart: %v", h.user)
 	h.stream = stream
+	if err := h.play(h.ctx, h.stream); err != nil {
+		cqhttp.SendGuildChannelMsg(h.guild, h.channel, "[CQ,at="+strconv.FormatInt(h.user, 10)+"] 播放失败:"+err.Error())
+	}
 }
 
 func (h *live) Play(filename string) error {
 	if h.cancel != nil {
 		h.cancel()
+		h.cancel = nil
+	}
+	if h.conn != nil {
+		h.conn.Close()
 		time.Sleep(time.Second * 2)
 	}
 	h.ctx, h.cancel = context.WithCancel(context.Background())
-	return h.play(h.ctx, filename, h.stream)
+	if err := h.connect(); err != nil {
+		return err
+	}
+	h.playqueue = []string{filename}
+	return nil
 }
 
-func (h *live) play(ctx context.Context, filename string, stream rtmp.OutboundStream) error {
+func (h *live) popup() string {
+	if len(h.playqueue) > 0 {
+		ret := h.playqueue[0]
+		h.playqueue = h.playqueue[1:]
+		return ret
+	}
+	return ""
+}
+
+func (h *live) play(ctx context.Context, stream rtmp.OutboundStream) error {
 	h.audioDataSize, h.videoDataSize = 0, 0
 	var err error
+	filename := h.popup()
+	if filename == "" {
+		return errors.New("队列无文件")
+	}
 	flvFile, err := flv.OpenFile("./data/live/flv/" + filename)
 	if err != nil {
 		glog.Errorf("Open FLV dump file error:", err)
@@ -108,7 +164,18 @@ func (h *live) play(ctx context.Context, filename string, stream rtmp.OutboundSt
 			if flvFile.IsFinished() {
 				glog.Infof("播放完成: %v", filename)
 				cqhttp.SendGuildChannelMsg(h.guild, h.channel, "[CQ:at,qq="+strconv.FormatInt(h.user, 10)+"] "+filename+" 播放完成")
-				break
+				filename := h.popup()
+				if filename == "" {
+					cqhttp.SendGuildChannelMsg(h.guild, h.channel, "[CQ:at,qq="+strconv.FormatInt(h.user, 10)+"] "+filename+" 播放队列完成")
+					return
+				}
+				tmpFlvFile, err := flv.OpenFile("./data/live/flv/" + filename)
+				if err != nil {
+					cqhttp.SendGuildChannelMsg(h.guild, h.channel, "[CQ:at,qq="+strconv.FormatInt(h.user, 10)+"] "+filename+" 播放失败,进入下一篇")
+					continue
+				}
+				flvFile.Close()
+				flvFile = tmpFlvFile
 			}
 			header, data, err := flvFile.ReadTag()
 			if err != nil {
@@ -142,5 +209,13 @@ func (h *live) play(ctx context.Context, filename string, stream rtmp.OutboundSt
 			}
 		}
 	}()
+	return nil
+}
+
+func (h *live) PlayQueue(filename string) error {
+	if len(h.playqueue) == 0 {
+		return h.Play(filename)
+	}
+	h.playqueue = append(h.playqueue, filename)
 	return nil
 }

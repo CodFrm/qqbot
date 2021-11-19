@@ -3,11 +3,13 @@ module github.com/CodFrm/qqbot
 go 1.13
 
 require (
+	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-redis/redis/v7 v7.3.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang-migrate/migrate/v4 v4.11.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/gorilla/websocket v1.4.2
+	github.com/gosuri/uitable v0.0.4
 	github.com/jinzhu/gorm v1.9.13
 	github.com/mzz2017/shadowsocksR v0.0.0-20200126130347-721f53a7b15a
 	github.com/nadoo/glider v0.9.2
@@ -20,5 +22,6 @@ require (
 	github.com/zhangpeihao/goflv v0.0.0-20140409083800-f2c8a1d6c9e1
 	github.com/zhangpeihao/gortmp v0.0.0-20161114025007-d5f2189e629f
 	github.com/zhangpeihao/log v0.0.0-20170117094621-62e921e41859 // indirect
+	github.com/zyxar/argo v0.0.0-20210923033329-21abde88a063
 	gopkg.in/yaml.v2 v2.3.0
 )

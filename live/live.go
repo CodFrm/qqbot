@@ -10,35 +10,13 @@ import (
 
 	"github.com/CodFrm/qqbot/cqhttp"
 	transition "github.com/CodFrm/qqbot/live/ffmpeg"
-	"github.com/golang/glog"
-	rtmp "github.com/zhangpeihao/gortmp"
 )
 
 var lives = make(map[string]*live)
 
 func AddLive(guild, channel, user int64, url, secret string) error {
-	live := newLive(guild, channel, user)
+	live := newLive(guild, channel, user, url, secret)
 
-	client, err := rtmp.Dial(url, live, 100)
-	if err != nil {
-		return err
-	}
-	if err := client.Connect(); err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			select {
-			case stream := <-live.createStreamChan:
-				stream.Attach(live)
-				err = stream.Publish(secret, "live")
-				if err != nil {
-					glog.Errorf("Publish error: %s", err.Error())
-				}
-			}
-		}
-	}()
 	lives[fmt.Sprintf("%d:%d:%d", guild, channel, user)] = live
 	return nil
 }
@@ -51,10 +29,19 @@ func Play(guild, channel, user int64, filename string) error {
 	return live.Play(filename)
 }
 
+func PlayQueue(guild, channel, user int64, filename string) error {
+	live, ok := lives[fmt.Sprintf("%d:%d:%d", guild, channel, user)]
+	if !ok {
+		return errors.New("没有推流权限")
+	}
+	return live.PlayQueue(filename)
+}
+
 var trProgress float32
+var inProgress bool
 
 func ToFlv(guild, channel, user int64, filename string) error {
-	if trProgress != 0 {
+	if inProgress {
 		return fmt.Errorf("上个视频还在转码中: %.2f", trProgress)
 	}
 	_, ok := lives[fmt.Sprintf("%d:%d:%d", guild, channel, user)]
@@ -71,11 +58,13 @@ func ToFlv(guild, channel, user int64, filename string) error {
 	}
 
 	go func() {
+		inProgress = true
 		progress := make(chan float32)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer func() {
 			cancel()
 			trProgress = 0
+			inProgress = false
 		}()
 		go func() {
 			for {
