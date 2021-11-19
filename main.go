@@ -54,6 +54,7 @@ func main() {
 
 }
 
+// 打卡;查看video;查看可推流video;播放(file);转码(file);转码进度;
 func guild(msg *cqhttp.MessageModel) {
 	if _, ok := msg.CommandMatch("^打卡$"); ok {
 		if str, err := command.Sign(msg.Group(), msg.Message.(*cqhttp.GuildMsg).ChannelId, msg.Sender().UserId); err != nil {
@@ -110,6 +111,9 @@ func guild(msg *cqhttp.MessageModel) {
 }
 
 func private(msg *cqhttp.MessageModel) {
+	if _, ok := config.AppConfig.AdminQQMap[msg.Self()]; !ok {
+		return
+	}
 	if args, ok := msg.CommandMatch("^帮(\\d+):(\\d+):(\\d+)推流 (.*?) (.*?)$"); ok {
 		glog.Infof("帮%v推流: %v %v", msg.Self(), args[0], args[1])
 		s, _ := url.PathUnescape(args[5])

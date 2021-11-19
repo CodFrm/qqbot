@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -56,10 +57,19 @@ func ToFlv(guild, channel, user int64, filename string) error {
 	if trProgress != 0 {
 		return fmt.Errorf("上个视频还在转码中: %.2f", trProgress)
 	}
+	_, ok := lives[fmt.Sprintf("%d:%d:%d", guild, channel, user)]
+	if !ok {
+		return errors.New("没有推流权限")
+	}
 	i := strings.LastIndex(filename, ".")
 	if i == -1 {
 		return errors.New("错误的文件名")
 	}
+	info, _ := os.Stat("./data/live/flv/" + filename[:i] + ".flv")
+	if info != nil {
+		return errors.New("已转码过了")
+	}
+
 	go func() {
 		progress := make(chan float32)
 		ctx, cancel := context.WithCancel(context.Background())

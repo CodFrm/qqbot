@@ -32,6 +32,7 @@ type Config struct {
 	TaobaoFl       taobaoopen.TaobaoConfig `yaml:"taobao-fl"`
 	Jd             jdunion.JdUnion
 	Urlkey         string
+	Aira2          Aira2
 }
 
 type MySQL struct {
@@ -48,6 +49,11 @@ type Redis struct {
 	Addr     string
 	Password string
 	DB       int
+}
+
+type Aira2 struct {
+	Addr   string
+	Secret string
 }
 
 var AppConfig Config

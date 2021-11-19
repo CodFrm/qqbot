@@ -71,3 +71,7 @@ jd:
   jdId: 京东联盟id
 
 urlkey: xxxxxx
+
+aira2:
+  addr: 127.0.0.1:6800
+  secret: password
