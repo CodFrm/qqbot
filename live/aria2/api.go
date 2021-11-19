@@ -74,6 +74,7 @@ type DownloadListItem struct {
 func (d DownloadListItems) Table() string {
 	table := uitable.New()
 	table.AddRow("ID", "NAME", "PROGRESS")
+	table.MaxColWidth = 20
 	for _, v := range d {
 		table.AddRow(v.Gid, v.Name, v.Progress)
 	}
