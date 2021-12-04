@@ -5,12 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/CodFrm/qqbot/config"
-	"github.com/CodFrm/qqbot/db"
-	"github.com/CodFrm/qqbot/model"
-	"github.com/CodFrm/qqbot/utils"
-	"github.com/CodFrm/qqbot/utils/iotqq"
-	"github.com/nfnt/resize"
 	"image"
 	"image/color"
 	_ "image/jpeg"
@@ -25,6 +19,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/CodFrm/qqbot/config"
+	"github.com/CodFrm/qqbot/db"
+	"github.com/CodFrm/qqbot/model"
+	"github.com/CodFrm/qqbot/utils"
+	"github.com/CodFrm/qqbot/utils/iotqq"
+	"github.com/nfnt/resize"
 )
 
 func RotatePic(command []string, pic *model.PicInfo) ([]image.Image, error) {
