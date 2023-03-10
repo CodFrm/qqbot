@@ -117,8 +117,14 @@ func (t *TaoKe) forwardToGroup(ctx *zero.Ctx) {
 		msg := make([]message.MessageSegment, 0)
 		var tkl *taobaoopen.ConverseTkl
 		for _, v := range ctx.Event.Message {
-			if v.Type == "text" && strings.HasPrefix(v.Data["text"], "/转") {
-				continue
+			if v.Type == "text" {
+				if strings.HasPrefix(v.Data["text"], "/转") {
+					v.Data["text"] = strings.TrimPrefix(v.Data["text"], "/转")
+					v.Data["text"] = strings.TrimSpace(v.Data["text"])
+				}
+				if v.Data["text"] == "" {
+					continue
+				}
 			}
 			msg = append(msg, v)
 			if v.Type != "text" {
