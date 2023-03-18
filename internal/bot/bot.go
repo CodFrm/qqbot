@@ -37,7 +37,7 @@ func (b *bot) StartCancel(ctx context.Context, cancel context.CancelFunc, cfg *c
 	}
 	go zero.RunAndBlock(&zero.Config{
 		NickName:      []string{"bot"},
-		CommandPrefix: "/",
+		CommandPrefix: "",
 		SuperUsers:    []int64{config.Admin},
 		Driver: []zero.Driver{
 			// 正向 WS

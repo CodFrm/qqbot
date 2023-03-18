@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/CodFrm/qqbot/command/alimama"
 	"github.com/CodFrm/qqbot/utils"
 	"github.com/CodFrm/qqbot/utils/taobaoopen"
 	"github.com/codfrm/cago/pkg/logger"
@@ -41,6 +42,37 @@ func (t *TaoKe) forward() {
 		}
 		return false
 	}).Handle(t.forwardToGroup)
+
+	zero.OnMessage(zero.OnlyPrivate, func(ctx *zero.Ctx) bool {
+		if tkl := utils.RegexMatch(ctx.MessageString(), "([^\\w](\\w{8,12})[^\\w])|(.*?\\.jd\\.com\\/)|(.*?\\.(taobao|tmall)\\.com\\/)"); len(tkl) > 0 {
+			return true
+		}
+		return false
+	}).SetPriority(30).SetBlock(true).Handle(func(ctx *zero.Ctx) {
+		ret, tkl, err := alimama.DealTkl(ctx.MessageString())
+		if err != nil {
+			logger.Default().Error("转链错误", zap.Error(err), zap.String("message", ctx.MessageString()))
+			if err.Error() == "很抱歉！商品ID解析错误！！！" {
+				ctx.Send("此商品不支持,无法搜索!")
+				return
+			}
+			ctx.Send("发生了一个系统错误: " + err.Error())
+			return
+		} else if tkl == nil {
+			ctx.Send("没有发现淘口令")
+		} else if tkl.Content[0].Shorturl == "" {
+			ctx.Send("此商品不支持,无法搜索!")
+		} else {
+			msg := ret + "\n约反:" + alimama.DealFl(tkl.Content[0].Tkfee3) + " "
+			if tkl.Content[0].CouponInfoMoney != "" && tkl.Content[0].CouponInfoMoney != "0" {
+				msg += "优惠券:" + tkl.Content[0].CouponInfoMoney + " 券后价:"
+			} else {
+				msg += "价格:"
+			}
+			msg += tkl.Content[0].QuanhouJiage + "￥"
+			ctx.Send(msg)
+		}
+	})
 
 	zero.OnCommand("订阅", zero.OnlyPrivate).Handle(func(ctx *zero.Ctx) {
 		if err := t.repo.Subscribe(ctx.Event.UserID, ctx.Event.GroupID, ctx.State["args"].(string)); err != nil {
@@ -82,8 +114,8 @@ func (t *TaoKe) forward() {
 
 func (t *TaoKe) forwardToGroup(ctx *zero.Ctx) {
 	content := ctx.MessageString()
-	if content[:5] == "/转 " {
-		content = content[5:]
+	if strings.HasPrefix(content, "转") {
+		content = strings.TrimSpace(strings.TrimPrefix(content, "转"))
 	}
 	//非图片,直接转发
 	groups, err := t.repo.ForwardGroupList()
@@ -126,6 +158,12 @@ func (t *TaoKe) forwardToGroup(ctx *zero.Ctx) {
 					continue
 				}
 			}
+			if v.Type == "at" {
+				if v.Data["qq"] == "all" {
+					msg = append(msg, message.Text("@全体成员"))
+				}
+				continue
+			}
 			msg = append(msg, v)
 			if v.Type != "text" {
 				continue
@@ -134,6 +172,9 @@ func (t *TaoKe) forwardToGroup(ctx *zero.Ctx) {
 			if err != nil && err.Error() != "很抱歉！商品ID解析错误！！！" {
 				logger.Default().Error("转发口令失败", zap.Error(err), zap.String("content", v.String()))
 				return
+			}
+			if strings.HasPrefix(content, "转") {
+				content = strings.TrimSpace(strings.TrimPrefix(content, "转"))
 			}
 			if tmpTkl != nil {
 				tkl = tmpTkl
@@ -152,7 +193,6 @@ func (t *TaoKe) forwardToGroup(ctx *zero.Ctx) {
 	// 转发给订阅者
 	go t.queueSend(ctx, subscribeMsg)
 	return
-
 }
 
 func (t *TaoKe) queueSend(ctx *zero.Ctx, subscribeMsg string) {

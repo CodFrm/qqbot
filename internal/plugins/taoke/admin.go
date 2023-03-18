@@ -20,19 +20,21 @@ func (t *TaoKe) admin() {
 		}
 		ctx.SendChain(message.Text("转发关闭成功"))
 	})
-	zero.OnCommand("转发列表", zero.OnlyPrivate, zero.AdminPermission).Handle(func(ctx *zero.Ctx) {
-		groups, err := t.repo.ForwardGroupList()
-		if err != nil {
-			ctx.SendChain(message.Text("获取转发列表失败"))
-			return
-		}
-		china := make([]message.MessageSegment, 0)
-		china = append(china, message.Text("转发列表: "))
-		for _, group := range groups {
-			china = append(china, message.Text(group), message.Text(" "))
-		}
-		ctx.SendChain(china...)
-	})
+	zero.OnCommand("转发列表", zero.OnlyPrivate, zero.AdminPermission).
+		SetBlock(true).SetPriority(20).
+		Handle(func(ctx *zero.Ctx) {
+			groups, err := t.repo.ForwardGroupList()
+			if err != nil {
+				ctx.SendChain(message.Text("获取转发列表失败"))
+				return
+			}
+			china := make([]message.MessageSegment, 0)
+			china = append(china, message.Text("转发列表: "))
+			for _, group := range groups {
+				china = append(china, message.Text(group), message.Text(" "))
+			}
+			ctx.SendChain(china...)
+		})
 	zero.OnCommand("添加转发", zero.OnlyPrivate, zero.AdminPermission).Handle(func(ctx *zero.Ctx) {
 		group := ctx.State["args"].(string)
 		if err := t.repo.AddForwardGroup(group); err != nil {
@@ -78,5 +80,7 @@ func (t *TaoKe) admin() {
 		}
 		ctx.SendChain(china...)
 	})
-	zero.OnCommand("转", zero.OnlyPrivate, zero.AdminPermission).Handle(t.forwardToGroup)
+	zero.OnCommand("转", zero.OnlyPrivate, zero.AdminPermission).
+		SetPriority(30).
+		Handle(t.forwardToGroup)
 }

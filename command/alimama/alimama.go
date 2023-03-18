@@ -2,19 +2,20 @@ package alimama
 
 import (
 	"fmt"
+	"net/url"
+	"regexp"
+	"strconv"
+	"strings"
+
 	"github.com/CodFrm/qqbot/config"
 	"github.com/CodFrm/qqbot/db"
 	"github.com/CodFrm/qqbot/utils"
 	"github.com/CodFrm/qqbot/utils/iotqq"
 	"github.com/CodFrm/qqbot/utils/jdunion"
 	"github.com/CodFrm/qqbot/utils/taobaoopen"
-	"net/url"
-	"regexp"
-	"strconv"
-	"strings"
 )
 
-var tb *taobaoopen.Taobao
+var Tb *taobaoopen.Taobao
 var jd *jdunion.JdUnion
 var mq *broker
 var tbfl *taobaoopen.Taobao
@@ -29,7 +30,7 @@ func Init() error {
 	//c.AddFunc("0 30 22 * * ?", notice("夜宵时间,来撸串"))
 	//c.Start()
 	topicList = make(map[string]int)
-	tb = taobaoopen.NewTaobao(config.AppConfig.Taobao)
+	Tb = taobaoopen.NewTaobao(config.AppConfig.Taobao)
 	tbfl = taobaoopen.NewTaobao(config.AppConfig.TaobaoFl)
 	jd = jdunion.NewJdUnion(config.AppConfig.Jd)
 	mq = NewBroker()
@@ -149,24 +150,24 @@ func DealTklFl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 
 func DealTkl(msg string) (string, *taobaoopen.ConverseTkl, error) {
 	if tkl := utils.RegexMatch(msg, "[^\\w](\\w{8,12})[^\\w]"); len(tkl) >= 2 {
-		if ret, err := tb.ConversionTkl(tkl[1]); err != nil {
+		if ret, err := Tb.ConversionTkl(tkl[1]); err != nil {
 			if err.Error() == "很抱歉！商品ID解析错误！！！" {
 				// 获取口令链接和类型,判断是否为活动口令
-				ret, err := tb.ResolveTklAddress(tkl[1])
+				ret, err := Tb.ResolveTklAddress(tkl[1])
 				if err != nil {
 					return msg, nil, err
 				}
 				if ret.URLType == "10" || ret.URLType == "3" {
 					//处理活动链接
 					activeId := ret.URLID
-					ret, err := tb.GetActiveInfo(activeId)
+					ret, err := Tb.GetActiveInfo(activeId)
 					if err != nil {
 						return msg, nil, err
 					}
 					if len(ret.Response.Data.PageName) <= 5 {
 						ret.Response.Data.PageName = "省钱不吃土"
 					}
-					mytkl, err := tb.CreateTpwd(ret.Response.Data.PageName, ret.Response.Data.ClickURL)
+					mytkl, err := Tb.CreateTpwd(ret.Response.Data.PageName, ret.Response.Data.ClickURL)
 					if err != nil {
 						return msg, nil, err
 					}
@@ -258,20 +259,21 @@ func DealFl(fl string) string {
 }
 
 func Search(keyword string) (string, error) {
-	//list, err := tb.MaterialSearch(keyword)
-	//if err != nil {
-	//	return "", err
-	//}
+	return "搜索功能存在问题，暂未开放", nil
+	list, err := Tb.MaterialSearch(keyword)
+	if err != nil {
+		return "", err
+	}
 	ret := &db.StringCache{}
-	if err := db.GetOrSet("alimama:search:"+keyword, ret, func() (interface{}, error) {
-		ret := "网站上线啦,更强大更好用的搜索方式:" + "https://gw.icodef.com/pages/search/search?keyword=" + url.QueryEscape(keyword)
+	if err := db.GetOrSet("alimama:search:"+keyword+":v2", ret, func() (interface{}, error) {
+		//ret := "网站上线啦,更强大更好用的搜索方式:" + "https://gw.icodef.com/pages/search/search?keyword=" + url.QueryEscape(keyword)
 		//",直接访问此链接即可查看搜索结果:" + ShortUrl("https://gw.icodef.com/pages/search/search?keyword="+url.QueryEscape(keyword))
-		return &db.StringCache{String: ret}, nil
-		//if s, err := GenCopywriting(list); err != nil {
-		//	return nil, err
-		//} else {
-		//	return &db.StringCache{String: s}, nil
-		//}
+		//return &db.StringCache{String: ret}, nil
+		if s, err := GenCopywriting(list); err != nil {
+			return nil, err
+		} else {
+			return &db.StringCache{String: s}, nil
+		}
 	}); err != nil {
 		return "", nil
 	}
@@ -286,7 +288,7 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 	for _, v := range items {
 		ret += v.ShortTitle + "\n"
 		if v.CouponAmount == "" {
-			tkl, err := tb.CreateTpwd(v.ShortTitle, "https:"+v.Url)
+			tkl, err := Tb.CreateTpwd(v.ShortTitle, "https:"+v.Url)
 			if err != nil || tkl == "" {
 				tkl = v.CouponShareUrl
 			}
@@ -300,7 +302,7 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 			zk_final_price, _ := strconv.ParseFloat(v.ZkFinalPrice, 64)
 			if zk_final_price >= coupon_start_fee {
 				coupon_amount, _ := strconv.ParseFloat(v.CouponAmount, 64)
-				tkl, err := tb.CreateTpwd(v.ShortTitle, "https:"+v.CouponShareUrl)
+				tkl, err := Tb.CreateTpwd(v.ShortTitle, "https:"+v.CouponShareUrl)
 				if err != nil || tkl == "" {
 					tkl = v.CouponShareUrl
 				}
@@ -310,7 +312,7 @@ func GenCopywriting(items []*taobaoopen.MaterialItem) (string, error) {
 				}
 				ret += "原价:" + v.ZkFinalPrice + "￥ 券后价:" + strconv.FormatFloat(zk_final_price-coupon_amount, 'G', 5, 64) + "￥ " + ShortUrl("http://gw.icodef.com/tb.html?tkl="+url.QueryEscape(tkl)+"&pic="+url.QueryEscape(v.PictUrl)) + "\n"
 			} else {
-				tkl, err := tb.CreateTpwd(v.ShortTitle, "https:"+v.Url)
+				tkl, err := Tb.CreateTpwd(v.ShortTitle, "https:"+v.Url)
 				if err != nil || tkl == "" {
 					tkl = v.Url
 				}

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"reflect"
 	"time"
+
+	"github.com/codfrm/cago/database/redis"
 )
 
 type Option func(*Options)
@@ -29,7 +31,7 @@ func NewOptions(opts ...Option) *Options {
 
 func GetOrSet(key string, get interface{}, set func() (interface{}, error), opts ...Option) error {
 	options := NewOptions(opts...)
-	data, err := Redis.Get(key).Result()
+	data, err := redis.Default().Get(context.Background(), key).Result()
 	if err != nil {
 		val, err := set()
 		if err != nil {
@@ -45,7 +47,7 @@ func GetOrSet(key string, get interface{}, set func() (interface{}, error), opts
 		if err != nil {
 			return err
 		}
-		if err := Redis.Set(key, b, ttl).Err(); err != nil {
+		if err := redis.Default().Set(context.Background(), key, b, ttl).Err(); err != nil {
 			return err
 		}
 		copyInterface(get, val)
@@ -66,7 +68,7 @@ type IntCache struct {
 }
 
 func Get(key string, get interface{}, opts ...Option) error {
-	val, err := Redis.Get(key).Result()
+	val, err := redis.Ctx(context.Background()).Get(key).Result()
 	if err != nil {
 		return err
 	}
@@ -86,7 +88,7 @@ func Set(key string, val interface{}, opts ...Option) error {
 	if err != nil {
 		return err
 	}
-	if err := Redis.Set(key, b, ttl).Err(); err != nil {
+	if err := redis.Ctx(context.Background()).Set(key, b, ttl).Err(); err != nil {
 		return err
 	}
 	return nil
